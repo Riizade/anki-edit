@@ -7,6 +7,7 @@ name = "pypi"
 jamdict = "*"
 jamdict-data = "*"
 ankisync2 = "*"
+genanki = "*"
 
 [dev-packages]
 
