@@ -1,0 +1,76 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "1434fae73bd16727f0051f1013013308be9e6fba79608a74fcea38c6160a10cf"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.10"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "ankisync2": {
+            "hashes": [
+                "sha256:2d339c70b95ba39d2746c0f9825835354bc9adcde517b10a05380abc7031282d",
+                "sha256:57343fa0ce2c57166184440c5bf07b16114a5f4f69069eb5c40dd5b2cc84863c"
+            ],
+            "index": "pypi",
+            "version": "==0.3.4"
+        },
+        "chirptext": {
+            "hashes": [
+                "sha256:643c9c11508f509b37257e3f3a629a668c0908ae5f582d7b9f131234a7379303"
+            ],
+            "markers": "python_version >= '3.5'",
+            "version": "==0.1.2"
+        },
+        "jamdict": {
+            "hashes": [
+                "sha256:fbb54de3d58ecdb9b53498ae873ab6519312c86bc848a9769d92b1b238d4c914"
+            ],
+            "index": "pypi",
+            "version": "==0.1a11.post2"
+        },
+        "jamdict-data": {
+            "hashes": [
+                "sha256:a4247dd9bb3148ab17c1b32fc56d7a7f1c35293b0d6ff2838c811f896d13f415"
+            ],
+            "index": "pypi",
+            "version": "==1.5"
+        },
+        "peewee": {
+            "hashes": [
+                "sha256:2581520c8dfbacd9d580c2719ae259f0637a9e46eda47dfc0ce01864c6366205"
+            ],
+            "version": "==3.15.4"
+        },
+        "puchikarui": {
+            "hashes": [
+                "sha256:8ebe96e8683eac82624eb90dd517e26421e467637b3a1fe1ef5275ba2dacddc8"
+            ],
+            "version": "==0.1"
+        },
+        "semver": {
+            "hashes": [
+                "sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4",
+                "sha256:fa0fe2722ee1c3f57eac478820c3a5ae2f624af8264cbdf9000c980ff7f75e3f"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "version": "==2.13.0"
+        },
+        "shortuuid": {
+            "hashes": [
+                "sha256:d08fd398f40f8baf87e15eef8355e92fa541bca4eb8465fefab7ee22f92711b9"
+            ],
+            "version": "==0.5.0"
+        }
+    },
+    "develop": {}
+}
