@@ -1,8 +1,26 @@
 from jamdict import Jamdict
 import sys
 from dataclasses import dataclass
-from vocab import VocabWord
-from pprint import pprint
+from core.vocab import VocabWord
+from pprint import pformat
+
+
+@dataclass(frozen=True)
+class Reading:
+    reading_type: str
+    on_type: str
+    value: str
+    r_status: str
+
+@dataclass(frozen=True)
+class Meaning:
+    value: str
+    language: str
+
+@dataclass(frozen=True)
+class ReadingMeaningGroup:
+    readings: list[Reading]
+    meanings: list[Meaning]
 
 @dataclass(frozen=True)
 class Radical:
@@ -39,7 +57,7 @@ def load_all_kanji():
         cid = kanji_row['ID']
 
         # fetch all radicals for this kanji
-        radical_rows = sqlite_context.select(f"SELECT * FROM radicals WHERE cid='{cid}'")
+        radical_rows = sqlite_context.select(f"SELECT * FROM radical WHERE cid='{cid}'")
         radicals: list[Radical] = []
         for radical in radical_rows:
             radicals.append(Radical(radical['value'], radical['rad_type']))
@@ -48,7 +66,7 @@ def load_all_kanji():
         variant_rows = sqlite_context.select(f"SELECT * FROM variant WHERE cid='{cid}'")
         variants: list[Variant] = []
         for variant in variant_rows:
-            variants.append(Variant(variant['value'], variant['variant__type']))
+            variants.append(Variant(variant['value'], variant['var_type']))
 
         # fetch RM groups for this kanji
         rm_groups = sqlite_context.select(f"SELECT * FROM rm_group WHERE cid='{cid}'")
@@ -71,6 +89,8 @@ def load_all_kanji():
             radicals=radicals,
             variants=variants,
             example_words=[],
+            meanings='',
         )
-        pprint(kanji)
+        s = pformat(kanji)
+        sys.stdout.buffer.write(s.encode("utf8"))
         sys.stdout.buffer.write("\n".encode("utf8"))
