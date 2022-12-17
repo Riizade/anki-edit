@@ -34,11 +34,6 @@ class BibData:
     text: str
 
 @dataclass(frozen=True)
-class EtymData:
-    idseq: str
-    text: str
-
-@dataclass(frozen=True)
 class AuditData:
     idseq: str
     upd_date: str
@@ -97,7 +92,7 @@ class SenseData:
 class VocabData:
     link: list[LinkData]
     bib: list[BibData]
-    etym: list[EtymData]
+    etym: list[str]
     audit: list[AuditData]
     kanji: list[KanjiData]
     kana: list[KanaData]
@@ -114,8 +109,82 @@ def load_all_vocab():
 
     # build the raw VocabData object for each entry
     # TODO
-    for id in entry_ids:
-        pass
+    for idseq in entry_ids:
+        # fetch LinkData
+        link_rows = sqlite_context.select(f"SELECT * FROM Link WHERE idseq='{idseq}'")
+        links: list[LinkData] = []
+        for row in link_rows:
+            links.append(
+                LinkData(
+                    id=row['ID'],
+                    idseq=row['idseq'],
+                    tag=row['tag'],
+                    desc=row['desc'],
+                    uri=row['uri'],
+                )
+            )
+
+        # fetch BibData
+        bib_rows = sqlite_context.select(f"SELECT * FROM Bib WHERE idseq='{idseq}'")
+        bibs: list[BibData] = []
+        for row in bib_rows:
+            bibs.append(
+                BibData(
+                    id=row['ID'],
+                    idseq=row['idseq'],
+                    tag=row['tag'],
+                    text=row['text'],
+                )
+            )
+
+        # fetch Etym
+        etym_rows = sqlite_context.select(f"SELECT * FROM Etym WHERE idseq='{idseq}'")
+        etyms = [row['text'] for row in etym_rows]
+
+        # fetch AuditData
+        audit_rows = sqlite_context.select(f"SELECT * FROM Audit WHERE idseq='{idseq}'")
+        audits: list[AuditData] = []
+        for row in audit_rows:
+            audits.append(AuditData(
+                idseq=row['idseq'],
+                upd_date=row['upd_date'],
+                upd_detl=row['upd_detl'],
+            ))
+
+        # fetch KanjiData
+        kanji_rows = sqlite_context.select(f"SELECT * FROM Kanji WHERE idseq='{idseq}'")
+        kanji: list[KanjiData] = []
+        for row in kanji_rows:
+            # record kanji id
+            kid = row['ID']
+            # fetch dependent data from kanji id
+            kji_rows = sqlite_context.select(f"SELECT * FROM KJI WHERE kid='{kid}'")
+            kji = [r['text'] for r in kji_rows]
+            kjp_rows = sqlite_context.select(f"SELECT * FROM KJP WHERE kid='{kid}'")
+            kjp = [r['text'] for r in kjp_rows]
+
+            # append kanji data
+            kanji.append(KanjiData(
+                id=kid,
+                idseq=row['idseq'],
+                text=row['text'],
+                kji=kji,
+                kjp=kjp,
+            ))
+
+        # fetch KanaData
+        kana_rows = sqlite_context.select(f"SELECT * FROM Kana WHERE idseq='{idseq}'")
+        # TODO
+
+        # fetch SenseData
+        sense_rows = sqlite_context.select(f"SELECT * FROM Sense where idseq='{idseq}'")
+        senses: list[SenseData] = []
+        for sense_row in sense_rows:
+            sid = sense_row['ID']
+            # TODO
+
+
+
 
         # self.add_table('Link', ['ID', 'idseq', 'tag', 'desc', 'uri'])
         # self.add_table('Bib', ['ID', 'idseq', 'tag', 'text'])
