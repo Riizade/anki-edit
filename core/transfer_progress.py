@@ -2,9 +2,11 @@ from ankisync2 import Apkg
 import sys
 
 def transfer():
-    # load the deck that contains user progress
+    # load the deck that contains user progress (source)
 
-    # load the deck to transfer to
+    # load the deck to transfer to (destination)
+
+    # match notes from source to destination
 
     # convert progress from each note
 
