@@ -1,10 +1,9 @@
 from jamdict import Jamdict
 from jamdict.jmdict import JMDEntry
 from dataclasses import dataclass
-from pprint import pformat
 from puchikarui import ExecutionContext
 from tqdm import tqdm
-from core.utils import cached_load
+from core.utils import cached_load, pprint_data
 from pathlib import Path
 
 @dataclass(frozen=True)
@@ -33,11 +32,12 @@ def load_all_vocab_uncached() -> list[JMDEntry]:
     entry_rows = sqlite_context.select("SELECT * FROM Entry")
     entry_ids = [row['idseq'] for row in entry_rows]
 
-    # build the raw VocabData object for each entry
+    # load the JMDEntry object for each entry
     vocab: list[JMDEntry] = []
     for idseq in tqdm(entry_ids):
         vocab_data = load_vocab_data(idseq)
         vocab.append(vocab_data)
+        pprint_data(vocab)
 
     # return the entire list
     return vocab

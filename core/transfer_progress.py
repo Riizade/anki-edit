@@ -1,4 +1,5 @@
 from ankisync2 import Apkg
+import genanki
 import sys
 
 def transfer():

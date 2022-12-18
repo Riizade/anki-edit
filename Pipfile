@@ -11,6 +11,7 @@ genanki = "*"
 tqdm = "*"
 dataclasses-serialization = "*"
 bson = "*"
+requests = "*"
 
 [dev-packages]
 
