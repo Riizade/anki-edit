@@ -104,7 +104,7 @@ def load_all_kanji() -> list[Kanji]:
             jlpt_level=kanji_row['jlpt'],
             radicals=radicals,
             variants=variants,
-            example_words=kanji_to_vocab_mapping[kanji_row['literal']],
+            example_words=kanji_to_vocab_mapping.get(kanji_row['literal'], []),
             meanings=meanings,
             on_yomi=on_yomi,
             kun_yomi=kun_yomi,

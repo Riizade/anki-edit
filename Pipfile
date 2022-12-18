@@ -9,6 +9,7 @@ jamdict-data = "*"
 ankisync2 = "*"
 genanki = "*"
 tqdm = "*"
+dataclasses-serialization = "*"
 
 [dev-packages]
 
