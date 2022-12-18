@@ -34,6 +34,7 @@ def load_all_vocab_uncached() -> list[JMDEntry]:
 
     # load the JMDEntry object for each entry
     vocab: list[JMDEntry] = []
+    # TODO: remove debug limit
     for idseq in tqdm(entry_ids):
         vocab_data = load_vocab_data(idseq)
         vocab.append(vocab_data)
@@ -57,7 +58,7 @@ def build_kanji_to_vocab_mapping(vocab_list: list[JMDEntry]) -> dict[str, list[J
     print("building kanji -> vocab mapping")
     mapping: dict[str, list[JMDEntry]] = {}
     for vocab in tqdm(vocab_list):
-        for k in vocab.kanji:
+        for k in vocab.kanji_forms:
             for char in k.text:
                 if is_probably_kanji(char):
                     if char not in mapping:

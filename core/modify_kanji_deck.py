@@ -1,5 +1,6 @@
 from core.kanji import load_all_kanji_uncached, Kanji
 import core.anki_connect as anki
+from tqdm import tqdm
 
 
 # replaces the examples field with examples taken from JMDict
@@ -11,6 +12,7 @@ def augment_examples(deck_name: str, kanji_field: str, examples_field: str):
         raise RuntimeError(f"No deck with name {deck_name}")
 
 
+    print("fetching note info via API...")
     note_ids = anki.get_notes_in_deck(deck_name)
     note_infos = anki.get_note_info(note_ids)
 
@@ -22,7 +24,8 @@ def augment_examples(deck_name: str, kanji_field: str, examples_field: str):
         kanji_map[kanji.character] = kanji
 
     # update note values with additional examples
-    for note in note_infos:
+    print("updating notes...")
+    for note in tqdm(note_infos):
         kanji_char = note['fields'][kanji_field]['value']
         kanji_data = kanji_map.get(kanji_char, None)
         if kanji_data is not None:
@@ -45,5 +48,9 @@ def new_examples_text(kanji_data: Kanji) -> str:
                     for gloss in sense.gloss:
                         glosses.append(gloss.text)
                 gloss_text = ", ".join(glosses)
-                str += f"{example.kanji_forms[idx]} ({example.kana_forms[idx]}): {gloss_text}\n"
+                kana_idx = idx
+                # TODO: this is probably wrong; the relationship between kana and kanji forms is unclear
+                if kana_idx > len(example.kana_forms):
+                    kana_idx = 0
+                str += f"{example.kanji_forms[idx]} ({example.kana_forms[kana_idx]}): {gloss_text}\n</br>"
     return str

@@ -36,15 +36,15 @@ class Kanji:
     example_words: list[JMDEntry]
 
 def load_all_kanji_cached() -> list[Kanji]:
-    cached_load(load_all_kanji_cached_internal, list[Kanji], Path('./cache/kanji.bson'))
+    return cached_load(load_all_kanji_cached_internal, list[Kanji], Path('./cache/kanji.bson'))
 
 def load_all_kanji_cached_internal() -> list[Kanji]:
     mapping = load_kanji_to_vocab_mapping_cached()
-    load_all_kanji_internal(mapping)
+    return load_all_kanji_internal(mapping)
 
 def load_all_kanji_uncached() -> list[Kanji]:
     mapping = load_kanji_to_vocab_mapping_uncached()
-    load_all_kanji_internal(mapping)
+    return load_all_kanji_internal(mapping)
 
 
 def load_all_kanji_internal(kanji_to_vocab_mapping: dict[str, list[JMDEntry]]) -> list[Kanji]:
