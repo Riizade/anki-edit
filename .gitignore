@@ -1,5 +1,6 @@
 ## Custom
 scratch/*
+cache/*
 
 ## Github ignores
 # Byte-compiled / optimized / DLL files
