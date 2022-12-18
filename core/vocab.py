@@ -34,7 +34,6 @@ def load_all_vocab_uncached() -> list[JMDEntry]:
 
     # load the JMDEntry object for each entry
     vocab: list[JMDEntry] = []
-    # TODO: remove debug limit
     for idseq in tqdm(entry_ids):
         vocab_data = load_vocab_data(idseq)
         vocab.append(vocab_data)

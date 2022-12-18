@@ -31,7 +31,7 @@ def augment_examples(deck_name: str, kanji_field: str, examples_field: str):
         if kanji_data is not None:
             new_text = new_examples_text(kanji_data)
             old_text = note['fields'][examples_field]['value']
-            updated_text = "----- new examples -----\n\n" + new_text + "\n\n----- old examples -----\n\n" + old_text
+            updated_text = "----- new examples -----\n</br>\n</br>" + new_text + "\n</br>\n</br>----- old examples -----\n</br>\n</br>" + old_text
             anki.update_note_field(note['noteId'], examples_field, updated_text)
 
 def new_examples_text(kanji_data: Kanji) -> str:
@@ -50,7 +50,7 @@ def new_examples_text(kanji_data: Kanji) -> str:
                 gloss_text = ", ".join(glosses)
                 kana_idx = idx
                 # TODO: this is probably wrong; the relationship between kana and kanji forms is unclear
-                if kana_idx > len(example.kana_forms):
+                if kana_idx >= len(example.kana_forms):
                     kana_idx = 0
                 str += f"{example.kanji_forms[idx]} ({example.kana_forms[kana_idx]}): {gloss_text}\n</br>"
     return str
