@@ -3,9 +3,10 @@ from jamdict.jmdict import JMDEntry
 from core.vocab import load_all_vocab_uncached
 from pathlib import Path
 from core.utils import pprint_data
+from core.modify_kanji_deck import augment_examples
 
 def main():
-    load_all_vocab_uncached()
+    augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")
 
 def analyze_vocab(vocab_list: list[JMDEntry]):
     total = len(vocab_list)

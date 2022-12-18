@@ -37,7 +37,6 @@ def load_all_vocab_uncached() -> list[JMDEntry]:
     for idseq in tqdm(entry_ids):
         vocab_data = load_vocab_data(idseq)
         vocab.append(vocab_data)
-        pprint_data(vocab)
 
     # return the entire list
     return vocab
