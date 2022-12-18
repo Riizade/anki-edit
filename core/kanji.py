@@ -2,7 +2,9 @@ from jamdict import Jamdict
 import sys
 from dataclasses import dataclass
 from core.vocab import VocabWord
+from core.vocab import load_kanji_to_vocab_mapping
 from pprint import pformat
+from tqdm import tqdm
 
 @dataclass(frozen=True)
 class Radical:
@@ -31,6 +33,8 @@ class Kanji:
 
 
 def load_all_kanji() -> list[Kanji]:
+    kanji_to_vocab_mapping = load_kanji_to_vocab_mapping()
+
     # initialize SQLite context
     jam = Jamdict()
     sqlite_context = jam.kd2.ctx()
@@ -38,7 +42,8 @@ def load_all_kanji() -> list[Kanji]:
     # fetch each kanji
     all_kanji: list[Kanji] = []
     kanji_rows = sqlite_context.select("SELECT * FROM character")
-    for kanji_row in kanji_rows:
+    print("loading kanji...")
+    for kanji_row in tqdm(kanji_rows):
         # record character id
         cid = kanji_row['ID']
 
@@ -99,7 +104,7 @@ def load_all_kanji() -> list[Kanji]:
             jlpt_level=kanji_row['jlpt'],
             radicals=radicals,
             variants=variants,
-            example_words=[],
+            example_words=kanji_to_vocab_mapping[kanji_row['literal']],
             meanings=meanings,
             on_yomi=on_yomi,
             kun_yomi=kun_yomi,

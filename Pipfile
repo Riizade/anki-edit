@@ -8,6 +8,7 @@ jamdict = "*"
 jamdict-data = "*"
 ankisync2 = "*"
 genanki = "*"
+tqdm = "*"
 
 [dev-packages]
 
