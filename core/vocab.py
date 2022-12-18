@@ -1,9 +1,10 @@
 from jamdict import Jamdict
-import sys
 from dataclasses import dataclass
 from pprint import pformat
 from puchikarui import ExecutionContext
 from tqdm import tqdm
+from core.utils import cached_load
+from pathlib import Path
 
 @dataclass(frozen=True)
 class ExampleSentence:
@@ -100,7 +101,10 @@ class VocabData:
     kana: list[KanaData]
     senses: list[SenseData]
 
-def load_all_vocab():
+def load_all_vocab_cached() -> list[VocabData]:
+    return cached_load(load_all_vocab_uncached, list[VocabData], Path('./cache/vocab.bson'))
+
+def load_all_vocab_uncached() -> list[VocabData]:
     # initialize SQLite context
     jam = Jamdict()
     sqlite_context = jam.kd2.ctx()
@@ -114,16 +118,24 @@ def load_all_vocab():
     vocab: list[VocabData] = []
     for idseq in tqdm(entry_ids):
         vocab_data = load_vocab_data(idseq, sqlite_context)
-        # debug prints
-        # sys.stdout.buffer.write(pformat(vocab_data).encode("utf8"))
-        # sys.stdout.buffer.write("\n".encode("utf8"))
         vocab.append(vocab_data)
 
     # return the entire list
     return vocab
 
-def load_kanji_to_vocab_mapping() -> dict[str, list[VocabData]]:
-    vocab_list = load_all_vocab()
+def load_kanji_to_vocab_mapping_cached() -> dict[str, list[VocabData]]:
+    cached_load(load_kanji_to_vocab_mapping_internal_cached, dict[str, list[VocabData]], Path('./cache/kanji_to_vocab_mapping.bson'))
+
+def load_kanji_to_vocab_mapping_internal_cached() -> dict[str, list[VocabData]]:
+    vocab_list = load_all_vocab_cached()
+    return build_kanji_to_vocab_mapping(vocab_list)
+
+def load_kanji_to_vocab_mapping_uncached() -> dict[str, list[VocabData]]:
+    vocab_list = load_all_vocab_uncached()
+    return build_kanji_to_vocab_mapping(vocab_list)
+
+
+def build_kanji_to_vocab_mapping(vocab_list: list[VocabData]) -> dict[str, list[VocabData]]:
     print("building kanji -> vocab mapping")
     mapping: dict[str, list[VocabData]] = {}
     for vocab in tqdm(vocab_list):

@@ -2,9 +2,12 @@ from jamdict import Jamdict
 import sys
 from dataclasses import dataclass
 from core.vocab import VocabWord
-from core.vocab import load_kanji_to_vocab_mapping
+from core.vocab import load_kanji_to_vocab_mapping_uncached, load_kanji_to_vocab_mapping_cached
 from pprint import pformat
 from tqdm import tqdm
+from core.utils import cached_load
+
+from pathlib import Path
 
 @dataclass(frozen=True)
 class Radical:
@@ -31,10 +34,19 @@ class Kanji:
     nanori: list[str]
     example_words: list[VocabWord]
 
+def load_all_kanji_cached() -> list[Kanji]:
+    cached_load(load_all_kanji_cached_internal, list[Kanji], Path('./cache/kanji.bson'))
 
-def load_all_kanji() -> list[Kanji]:
-    kanji_to_vocab_mapping = load_kanji_to_vocab_mapping()
+def load_all_kanji_cached_internal() -> list[Kanji]:
+    mapping = load_kanji_to_vocab_mapping_cached()
+    load_all_kanji_internal(mapping)
 
+def load_all_kanji_uncached() -> list[Kanji]:
+    mapping = load_kanji_to_vocab_mapping_uncached()
+    load_all_kanji_internal(mapping)
+
+
+def load_all_kanji_internal(kanji_to_vocab_mapping: dict[str, list[VocabWord]]) -> list[Kanji]:
     # initialize SQLite context
     jam = Jamdict()
     sqlite_context = jam.kd2.ctx()

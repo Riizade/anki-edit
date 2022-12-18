@@ -10,6 +10,7 @@ ankisync2 = "*"
 genanki = "*"
 tqdm = "*"
 dataclasses-serialization = "*"
+bson = "*"
 
 [dev-packages]
 
