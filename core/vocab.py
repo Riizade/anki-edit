@@ -3,7 +3,7 @@ from jamdict.jmdict import JMDEntry
 from dataclasses import dataclass
 from puchikarui import ExecutionContext
 from tqdm import tqdm
-from core.utils import cached_load, pprint_data
+from core.utils import cached_load, pprint_data, is_probably_kanji
 from pathlib import Path
 
 @dataclass(frozen=True)
@@ -69,17 +69,3 @@ def load_vocab_data(idseq: str) -> JMDEntry:
     entry: JMDEntry = Jamdict().get_entry(idseq)
     return entry
 
-# define sets of characters to ignore
-hiragana = 'あいうえおかきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわを'
-katakana = 'アイウエオカキクケコガギグゲゴサシスセソザジズゼゾタチツテトダヂヅデドナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨラリルレロワヲ'
-small_hiragana = 'っぁぃぅぇぉょゅゃ'
-small_katakana = 'ッァィゥェォョュャ'
-punctuation = './?!:;<>[]-_+=~`ー\'\"|`'
-alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-numbers = '1234567890'
-ignore_set = set(hiragana + katakana + punctuation + small_hiragana + small_katakana + alphabet + numbers)
-# this is not meant to be a foolproof solution
-# this just ignores common characters in Japanese that are not kanji so that when we store a kanji -> word mapping, we don't store extra data mapping vocab words to each kana that appears
-# this can definitely be improved
-def is_probably_kanji(character: str) -> bool:
-    return character not in ignore_set

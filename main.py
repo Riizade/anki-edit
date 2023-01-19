@@ -7,6 +7,7 @@ from core.modify_kanji_deck import augment_examples
 
 def main():
     augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")
+    augment_examples(deck_name="* JLPT N1 Recognition", kanji_field="Kanji", examples_field="Examples")
 
 def analyze_vocab(vocab_list: list[JMDEntry]):
     total = len(vocab_list)

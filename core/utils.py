@@ -25,3 +25,31 @@ def cached_load(load_function: callable, type, cache_path: Path) -> any:
 def pprint_data(data):
     sys.stdout.buffer.write(pformat(data).encode("utf8"))
     sys.stdout.buffer.write("\n".encode("utf8"))
+
+# define sets of characters to ignore
+hiragana = 'あいうえおかきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわを'
+katakana = 'アイウエオカキクケコガギグゲゴサシスセソザジズゼゾタチツテトダヂヅデドナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨラリルレロワヲ'
+small_hiragana = 'っぁぃぅぇぉょゅゃ'
+small_katakana = 'ッァィゥェォョュャ'
+punctuation = './?!:;<>[]-_+=~`ー\'\"|`'
+alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+numbers = '1234567890'
+
+hiragana_set = set(hiragana + small_hiragana)
+katakana_set = set(katakana + small_katakana)
+non_kanji_set = set(hiragana + katakana + punctuation + small_hiragana + small_katakana + alphabet + numbers)
+
+# this is not meant to be a foolproof solution
+# this just ignores common characters in Japanese that are not kanji so that when we store a kanji -> word mapping, we don't store extra data mapping vocab words to each kana that appears
+# this can definitely be improved
+def is_probably_kanji(character: str) -> bool:
+    return character not in non_kanji_set
+
+def is_hiragana(character: str) -> bool:
+    return character in hiragana_set
+
+def is_katakana(character: str) -> bool:
+    return character in katakana_set
+
+def is_kana(character: str) -> bool:
+    return character in hiragana_set or character in katakana_set
