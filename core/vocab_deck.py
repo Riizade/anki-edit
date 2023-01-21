@@ -7,19 +7,30 @@ from dataclasses import dataclass
 from typing import Callable
 
 @dataclass(frozen=True)
-class VocabCard:
+class VocabInfo:
     vocab: str
     reading: str
     definitions: list[str]
     grammar: list[str]
     example_sentences: list[str]
 
+@dataclass(frozen=True)
+class CardReviewInfo:
+    pass
+
+@dataclass(frozen=True)
+class VocabCard:
+    card_info: VocabInfo
+    review_info: CardReviewInfo
+
+
+
 def read_decks():
     vocab_10k = read_deck("* Japanese Core 10k Recognition", note_info_10k_to_card)
     vocab_18k = read_deck("Japanese Core 18k Recognition", note_info_18k_to_card)
 
-    set_10k = set([i.vocab for i in vocab_10k])
-    set_18k = set([i.vocab for i in vocab_18k])
+    set_10k = set([i.card_info.vocab for i in vocab_10k])
+    set_18k = set([i.card_info.vocab for i in vocab_18k])
 
     total_number = len(set_10k.union(set_18k))
     set_10k_not_in_18k = len(set_10k.difference(set_18k))
@@ -28,14 +39,20 @@ def read_decks():
     print(f"total: {total_number}\n10k -> 18k missing: {set_10k_not_in_18k}\n18k -> 10k missing: {set_18k_not_in_10k}\nintersection: {intersection}")
 
 
-def read_deck(name: str, conversion_function: Callable[[dict], VocabCard]) -> list[VocabCard]:
-    note_ids = anki_connect.get_notes_in_deck(name)
-    note_infos = anki_connect.get_note_info(note_ids)
+def read_deck(name: str, conversion_function: Callable[[dict], VocabInfo | None]) -> list[VocabCard]:
+    card_ids = anki_connect.get_cards_in_deck(name)
 
-    cards = [conversion_function(info) for info in note_infos]
+    cards = [card_id_to_card(id, conversion_function) for id in card_ids]
     cards = [c for c in cards if c is not None]
 
     return cards
+
+def card_id_to_card(card_id: int, conversion_function: Callable[[dict], VocabInfo | None]) -> VocabCard:
+    card_info = anki_connect.get_card_info([card_id])[0]
+    note_id = card_info['note']
+    note_info = anki_connect.get_note_info([note_id])[0]
+    vocab_info = conversion_function(note_info)
+    # TODO: finish implementing/grab review info
 
 
 def extract_value(fields: dict, field_name: str) -> str:
@@ -46,7 +63,7 @@ def extract_value(fields: dict, field_name: str) -> str:
     else:
         raise ValueError(f"cannot extract type from field {field_name} for info {fields}")
 
-def note_info_10k_to_card(info: dict) -> VocabCard | None:
+def note_info_10k_to_card(info: dict) -> VocabInfo | None:
     fields = info['fields']
     if 'Expression' in fields: # some cards in this deck are malformed and do not contain the same standard field set as the others
         vocab = extract_value(fields, 'Expression')
@@ -61,10 +78,6 @@ def note_info_10k_to_card(info: dict) -> VocabCard | None:
         grammar = [extract_value(fields, 'part-of-speech')]
         example_sentences = [extract_value(fields, 'sentence') + " " + extract_value(fields, 'sentence-translation'), extract_value(fields, 'examples')]
 
-
-    if not isinstance(vocab, str):
-        print("10k")
-        pprint_data(info)
     return VocabCard(
         vocab=vocab,
         reading=reading,
@@ -73,16 +86,14 @@ def note_info_10k_to_card(info: dict) -> VocabCard | None:
         example_sentences=example_sentences,
     )
 
-def note_info_18k_to_card(info: dict) -> VocabCard | None:
+def note_info_18k_to_card(info: dict) -> VocabInfo | None:
         fields = info['fields']
         vocab = fields['Expression']['value']
         reading = fields['Reading']['value']
         definitions = [fields['English definition'], fields["Additional definitions"]]
         grammar = [fields['Grammar']]
         example_sentences = []
-        if not isinstance(vocab, str):
-            print("18k")
-            pprint_data(info)
+
         return VocabCard(
             vocab=vocab,
             reading=reading,

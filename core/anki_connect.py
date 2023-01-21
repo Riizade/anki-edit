@@ -9,12 +9,28 @@ anki_connect_version = 6
 def get_deck_names_and_ids() -> dict[str, int]:
     return ankiconnect_action("deckNamesAndIds")['result']
 
+def get_cards_in_deck(deck_name: str) -> list[int]:
+    return ankiconnect_action(
+        action="findCards",
+        params={
+            "query":f"deck:\"{deck_name}\""
+        }
+    )
+
 # deck name to list of note ids
 def get_notes_in_deck(deck_name: str) -> list[int]:
     return ankiconnect_action(
         action="findNotes",
         params={
             "query": f"deck:\"{deck_name}\""
+        }
+    )['result']
+
+def get_card_info(card_ids: list[int]) -> list[dict]:
+    return ankiconnect_action(
+        action="cardsInfo",
+        params={
+            "cards": card_ids,
         }
     )['result']
 
