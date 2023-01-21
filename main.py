@@ -4,8 +4,12 @@ from core.vocab import load_all_vocab_uncached
 from pathlib import Path
 from core.utils import pprint_data
 from core.modify_kanji_deck import augment_examples
+from core.vocab_deck import read_decks
 
 def main():
+    read_decks()
+
+def augment_kanji_examples():
     augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")
     augment_examples(deck_name="* JLPT N1 Recognition", kanji_field="Kanji", examples_field="Examples")
 

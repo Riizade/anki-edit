@@ -26,6 +26,9 @@ def pprint_data(data):
     sys.stdout.buffer.write(pformat(data).encode("utf8"))
     sys.stdout.buffer.write("\n".encode("utf8"))
 
+def print_utf8(s: str):
+    sys.stdout.buffer.write(s.encode("utf8"))
+
 # define sets of characters to ignore
 hiragana = 'あいうえおかきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわを'
 katakana = 'アイウエオカキクケコガギグゲゴサシスセソザジズゼゾタチツテトダヂヅデドナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨラリルレロワヲ'

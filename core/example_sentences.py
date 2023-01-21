@@ -52,11 +52,8 @@ def uniform_type(s: str) -> bool:
     return True
 
 # converts a Japanese sentence to n-grams
-# n-grams will only contain one of kanji, katakana, or hiragana, never two or more
 def sentence_to_n_grams(sentence: str, n: int) -> list[str]:
     # get a list of n grams
     ngrams = [sentence[i:i+n] for i in range(len(sentence)-n+1)]
-    # filter to only ngrams that are made of the same type of character
-    ngrams = ["".join(g) for g in ngrams if uniform_type(g)]
     return ngrams
 
