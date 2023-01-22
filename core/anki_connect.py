@@ -65,6 +65,14 @@ def update_note_field(note_id: int, field_name: str, new_value: str):
         }
     )
 
+def add_note(note: dict):
+    ankiconnect_action(
+        action="addNote",
+        params={
+            "note": note,
+        }
+    )
+
 
 def ankiconnect_action(action: str, params: dict | None = None) -> dict:
     if params is None:

@@ -30,6 +30,28 @@ class VocabCard:
     card_info: VocabInfo
     review_info: CardReviewInfo
 
+def card_to_fields(card: VocabCard) -> dict:
+    # TODO: implement
+    pass
+
+def card_to_api(deck_name: str, model_name: str, card: VocabCard) -> dict:
+    fields = card_to_fields(card)
+    return {
+        "deckName": deck_name,
+        "modelName": model_name,
+        "fields": fields,
+        "options": {
+            "allowDuplicate": True,
+            "duplicateScope": "deck",
+            "duplicateScopeOptions": {
+                "checkChildren": False,
+                "checkAllModels": False
+            }
+        },
+        "tags": [],
+
+    }
+
 # this function builds and caches an index of n-grams to containing sentence
 @static_vars(sentence_index=None)
 def get_example_sentences(vocab: str) -> list[ParallelSentence]:
