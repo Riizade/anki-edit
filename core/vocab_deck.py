@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Callable
 from core.example_sentences import sentence_map, ParallelSentence
 from tqdm import tqdm
+import random
 
 @dataclass(frozen=True)
 class VocabInfo:
@@ -29,6 +30,7 @@ class VocabCard:
     card_info: VocabInfo
     review_info: CardReviewInfo
 
+# this function builds and caches an index of n-grams to containing sentence
 @static_vars(sentence_index=None)
 def get_example_sentences(vocab: str) -> list[ParallelSentence]:
     if get_example_sentences.sentence_index is None:
@@ -36,16 +38,97 @@ def get_example_sentences(vocab: str) -> list[ParallelSentence]:
 
     return get_example_sentences.sentence_index.get(vocab, [])
 
+def get_example_sentences_max(vocab: str, maximum: int = 10) -> list[ParallelSentence]:
+    raw_sentences = get_example_sentences(vocab)
+    if len(raw_sentences) > maximum:
+        return random.sample(raw_sentences, maximum)
+    else:
+        return raw_sentences
+
 def count_example_sentences(vocab: set[str]):
     print_utf8("counting example sentences...")
     count = 0
     for v in tqdm(vocab):
         if len(get_example_sentences(v)) > 0:
             count += 1
-    total = len(v)
+    total = len(vocab)
     print_utf8(f"number of examples with sentences {count}")
     print_utf8(f"number of examples without sentences {total - count}")
     print_utf8(f"total cards: {total}")
+
+def add_example_sentences_to_deck(deck: list[VocabCard]) -> list[VocabCard]:
+    new_deck = []
+    for card in deck:
+        added_sentences = get_example_sentences_max(card.card_info.vocab, maximum=10)
+        sentence_strs = [s.japanese + " " + s.english for s in added_sentences]
+        sentences = card.card_info.example_sentences + sentence_strs
+        new_card = VocabCard(
+            review_info=card.review_info,
+            card_info=VocabInfo(
+                vocab=card.card_info.vocab,
+                reading=card.card_info.reading,
+                definitions=card.card_info.definitions,
+                grammar=card.card_info.grammar,
+                example_sentences=sentences,
+            )
+        )
+        new_deck.append(new_card)
+
+    return new_deck
+
+# deck a has its reviews/intervals prioritized, deck b does not
+def merge_decks(a: list[VocabCard], b: list[VocabCard]) -> list[VocabCard]:
+    # build an index for list a
+    a_map: dict[str, VocabCard] = {}
+    print_utf8("creating card index for merging...")
+    for card in tqdm(a):
+        a_map[card.card_info.vocab] = card
+
+    print_utf8("merging decks...")
+    result_cards = []
+    for card in tqdm(b):
+        if card.card_info.vocab in a_map:
+            merged_card = merge_cards(a_map[card.card_info.vocab], card)
+            del a_map[card.card_info.vocab] # remove the card from the map
+        else:
+            merged_card = card
+        result_cards.append(merged_card)
+
+    # anything left in a_map is left over and did not have a match from b, so we add those too
+    for card in a_map.values():
+        result_cards.append(card)
+
+    return result_cards
+
+# uses card a's review info, prioritizes info from card a
+def merge_cards(a: VocabCard, b: VocabCard) -> VocabCard:
+    vocab = a.card_info.vocab
+    definitions = a.card_info.definitions + b.card_info.definitions
+    grammar = list(set([g.lower() for g in a.card_info.grammar] + [g.lower() for g in b.card_info.grammar]))
+    reading = a.card_info.reading # TODO: maybe evaluate which is the better reading somehow?
+    example_sentences = a.card_info.example_sentences + b.card_info.example_sentences
+
+    vocab_info = VocabInfo(
+        vocab=vocab,
+        reading=reading,
+        definitions=definitions,
+        grammar=grammar,
+        example_sentences=example_sentences,
+    )
+
+    review_info = a.review_info
+
+    return VocabCard(
+        card_info=vocab_info,
+        review_info=review_info
+    )
+
+def create_merged_decks() -> list[VocabCard]:
+    vocab_10k = read_deck("* Japanese Core 10k Recognition", note_info_10k_to_card)
+    vocab_18k = read_deck("Japanese Core 18k Recognition", note_info_18k_to_card)
+    combined = merge_decks(vocab_10k, vocab_18k)
+    enhanced = add_example_sentences_to_deck(combined)
+    return enhanced
 
 def read_decks():
     vocab_10k = read_deck("* Japanese Core 10k Recognition", note_info_10k_to_card)
