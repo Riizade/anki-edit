@@ -21,7 +21,7 @@ def sentence_map() -> dict[str, list[ParallelSentence]]:
 
 def read_sentences() -> list[ParallelSentence]:
     sentences = []
-    with open('./data/sentence_corpus_tatoeba_org.txt') as f:
+    with open('./data/sentence_corpus_tatoeba_org.txt', encoding='utf8') as f:
         print_utf8("reading sentences from file...")
         for line in tqdm(f.readlines()):
             split = line.split("\t")

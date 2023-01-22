@@ -34,7 +34,7 @@ def get_example_sentences(vocab: str) -> list[ParallelSentence]:
     if get_example_sentences.sentence_index is None:
         get_example_sentences.sentence_index = sentence_map()
 
-    get_example_sentences.sentence_index.get(vocab, [])
+    return get_example_sentences.sentence_index.get(vocab, [])
 
 def count_example_sentences(vocab: set[str]):
     print_utf8("counting example sentences...")
@@ -60,9 +60,9 @@ def read_decks():
     intersection = len(set_10k.intersection(set_18k))
     print_utf8(f"total: {total_number}\n10k -> 18k missing: {set_10k_not_in_18k}\n18k -> 10k missing: {set_18k_not_in_10k}\nintersection: {intersection}")
     print_utf8(f"10k stats")
-    count_example_sentences(vocab_10k)
+    count_example_sentences(set_10k)
     print_utf8(f"18k stats")
-    count_example_sentences(vocab_18k)
+    count_example_sentences(set_18k)
 
 
 def read_deck(name: str, conversion_function: Callable[[dict], VocabInfo | None]) -> list[VocabCard]:
