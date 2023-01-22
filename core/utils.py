@@ -27,7 +27,14 @@ def pprint_data(data):
     sys.stdout.buffer.write("\n".encode("utf8"))
 
 def print_utf8(s: str):
-    sys.stdout.buffer.write(s.encode("utf8"))
+    sys.stdout.buffer.write(s.encode("utf8") + "\n".encode("utf8"))
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 # define sets of characters to ignore
 hiragana = 'あいうえおかきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわを'

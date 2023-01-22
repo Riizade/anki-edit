@@ -15,7 +15,7 @@ def get_cards_in_deck(deck_name: str) -> list[int]:
         params={
             "query":f"deck:\"{deck_name}\""
         }
-    )
+    )['result']
 
 # deck name to list of note ids
 def get_notes_in_deck(deck_name: str) -> list[int]:
@@ -25,6 +25,14 @@ def get_notes_in_deck(deck_name: str) -> list[int]:
             "query": f"deck:\"{deck_name}\""
         }
     )['result']
+
+# returns a list of (card, note)
+def get_cards_and_notes_in_deck(deck_name: str) -> list[(dict, dict)]:
+    card_ids = get_cards_in_deck(deck_name)
+    card_infos = get_card_info(card_ids)
+    note_ids = [c['note'] for c in card_infos]
+    note_infos = get_note_info(note_ids)
+    return zip(card_infos, note_infos)
 
 def get_card_info(card_ids: list[int]) -> list[dict]:
     return ankiconnect_action(
