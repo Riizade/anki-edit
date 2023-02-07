@@ -145,7 +145,7 @@ def merge_cards(a: VocabCard, b: VocabCard) -> VocabCard:
         review_info=review_info
     )
 
-def create_merged_decks() -> list[VocabCard]:
+def create_enhanced_deck() -> list[VocabCard]:
     vocab_10k = read_deck("* Japanese Core 10k Recognition", note_info_10k_to_card)
     vocab_18k = read_deck("Japanese Core 18k Recognition", note_info_18k_to_card)
     combined = merge_decks(vocab_10k, vocab_18k)
