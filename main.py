@@ -5,9 +5,11 @@ from pathlib import Path
 from core.utils import pprint_data
 from core.modify_kanji_deck import augment_examples
 from core.vocab_deck import read_decks
+from core.dictionaries.it.load_dict import build_it_deck
+from core.dictionaries.jp.deck import build_jp_deck
 
 def main():
-    read_decks()
+    build_it_deck()
 
 def augment_kanji_examples():
     augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")

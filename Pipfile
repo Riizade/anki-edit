@@ -12,6 +12,7 @@ tqdm = "*"
 dataclasses-serialization = "*"
 bson = "*"
 requests = "*"
+pystardict = "*"
 
 [dev-packages]
 
