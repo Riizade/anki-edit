@@ -1,8 +1,10 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
 from dataclasses_serialization.json import JSONSerializer
 import csv
+from core.utils import print_utf8
 
 @dataclass(frozen=True)
 class FrequencyEntry:
@@ -15,91 +17,84 @@ class FrequencySource:
     name: str
     entries: list[FrequencyEntry]
 
-def load_bccwj(filename: Path) -> FrequencySource:
+    @staticmethod
+    def from_file(path: Path) -> FrequencySource:
+        load_frequency(path)
+
+def load_yomichan(filename: Path, source_name: str) -> FrequencySource:
     entries: list[FrequencyEntry] = []
     with open(filename, 'r', encoding='utf8') as f:
         data = json.load(f)
-        for entry in data:
-            entries.append(FrequencyEntry(entry[0], None, entry[2]))
+        for i, entry in enumerate(data):
+            # term
+            term = entry[0]
 
-    return FrequencySource(
-        name="BCCWJ",
-        entries=entries,
-    )
-
-def load_cc100(filename: Path) -> list[FrequencyEntry]:
-    entries: list[FrequencyEntry] = []
-    with open(filename, 'r', encoding='utf8') as f:
-        data = json.load(f)
-        for entry in data:
-            entries.append(FrequencyEntry(entry[0], entry[2]['reading'], entry[2]['frequency']))
-
-    return FrequencySource(
-        name="CC100",
-        entries=entries,
-    )
-
-def load_jpdb(filename: Path) -> list[FrequencyEntry]:
-    entries: list[FrequencyEntry] = []
-    with open(filename, 'r', encoding='utf8') as f:
-        data = json.load(f)
-        for entry in data:
-            if 'reading' in entry[2]:
+            # reading
+            if isinstance(entry[2], int):
+                reading  = None
+            elif 'reading' in entry[2]:
                 reading = entry[2]['reading']
             else:
                 reading = None
-            entries.append(FrequencyEntry(entry[0], reading, entry[2]['value']))
+
+            # ranking
+            if isinstance(entry[2], int):
+                freq = entry[2]
+            elif 'value' in entry[2]:
+                freq = entry[2]['value']
+            elif 'frequency' in entry[2]:
+                if isinstance(entry[2]['frequency'], int):
+                    freq = entry[2]['frequency']
+                else:
+                    freq = entry[2]['frequency']['value']
+            else:
+                raise ValueError(f"Could not parse frequency data for {entry}")
+
+            entries.append(FrequencyEntry(term, reading, freq))
 
     return FrequencySource(
-        name="JPDB",
+        name=source_name,
         entries=entries,
     )
 
-def load_wikipedia(filename: Path) -> list[FrequencyEntry]:
-    entries: list[FrequencyEntry] = []
-    with open(filename, 'r', encoding='utf8') as f:
-        data = json.load(f)
-        for entry in data:
-            entries.append(FrequencyEntry(entry[0], None, entry[2]))
-
-    return FrequencySource(
-        name="Wikipedia",
-        entries=entries,
-    )
-
-def load_sublex_csv(filename: Path) -> list[FrequencyEntry]:
+def load_subtlex_csv(filename: Path, source_name: str = "subtlex") -> list[FrequencyEntry]:
     entries: list[FrequencyEntry] = []
     with open(filename, 'r', encoding='utf8') as f:
         reader = csv.DictReader(f, delimiter=',', quotechar='"')
         for idx, row in enumerate(reader):
             entries.append(FrequencyEntry(
-                term=row["Word"],
-                reading=row["Pinyin"],
-                ranking=idx,
-            ))
-
-    return FrequencySource(
-        name="subtlex",
-        entries=entries,
-    )
-
-def load_sublex_tsv(filename: Path) -> list[FrequencyEntry]:
-    entries: list[FrequencyEntry] = []
-    with open(filename, 'r', encoding='utf8') as f:
-        reader = csv.DictReader(f, delimiter='\t', quotechar='"')
-        for idx, row in enumerate(reader):
-            entries.append(FrequencyEntry(
-                term=row["Word"],
+                term=row["spelling"],
                 reading=None,
                 ranking=idx,
             ))
 
     return FrequencySource(
-        name="subtlex",
+        name=source_name,
+        entries=entries,
+    )
+
+def load_subtlex_tsv(filename: Path, source_name: str = "subtlex") -> list[FrequencyEntry]:
+    entries: list[FrequencyEntry] = []
+    with open(filename, 'r', encoding='utf8') as f:
+        reader = csv.reader(f, delimiter='\t', quotechar='"')
+        for idx, row in enumerate(reader):
+            entries.append(FrequencyEntry(
+                term=row[0],
+                reading=row[2],
+                ranking=idx,
+            ))
+
+    return FrequencySource(
+        name=source_name,
         entries=entries,
     )
 
 def save_frequency(source: FrequencySource, path: Path):
     with open(path, 'w', encoding='utf8') as f:
-        jsons = JSONSerializer.serialize(source)
+        jsons = json.dumps(JSONSerializer.serialize(source))
         f.write(jsons)
+
+def load_frequency(path: Path) -> FrequencySource:
+    with open(path, 'r', encoding='utf8') as f:
+        s = f.read()
+        return JSONSerializer.deserialize(s)

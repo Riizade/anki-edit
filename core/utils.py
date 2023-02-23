@@ -26,8 +26,8 @@ def pprint_data(data):
     sys.stdout.buffer.write(pformat(data).encode("utf8"))
     sys.stdout.buffer.write("\n".encode("utf8"))
 
-def print_utf8(s: str):
-    sys.stdout.buffer.write(s.encode("utf8") + "\n".encode("utf8"))
+def print_utf8(d):
+    sys.stdout.buffer.write(str(d).encode("utf8") + "\n".encode("utf8"))
 
 def static_vars(**kwargs):
     def decorate(func):
