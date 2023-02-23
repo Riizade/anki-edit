@@ -5,11 +5,27 @@ from pathlib import Path
 from core.utils import pprint_data
 from core.modify_kanji_deck import augment_examples
 from core.vocab_deck import read_decks
-from core.dictionaries.it.load_dict import build_it_deck
-from core.dictionaries.jp.deck import build_jp_deck
+from core.dictionaries.frequency import *
 
 def main():
-    build_it_deck()
+    convert_frequency_dictionaries()
+
+def convert_frequency_dictionaries():
+    # list of tuples of (filename, parsing function, destination filename)
+    raw_dictionaries = [
+        (Path('./scratch/Chinese/subtlex-ch.utf8'), load_sublex_tsv, Path('./scratch/Chinese/frequency/subtlex.json')),
+        (Path('./scratch/Italian/subtlex-it.csv'), load_sublex_csv, Path('./scratch/Italian/frequency/subtlex.json')),
+        (Path('./scratch/Japanese/Yomichan Dictionaries/[Freq] BCCWJ/term_meta_bank_1.json'), load_bccwj, Path('./scratch/Japanese/frequency/bccwj.json')),
+        (Path('./scratch/Japanese/Yomichan Dictionaries/[Freq] JPDB (Recommended)/term_meta_bank_1.json'), load_jpdb, Path('./scratch/Japanese/frequency/jpdb.json')),
+        (Path('./scratch/Japanese/Yomichan Dictionaries/[Freq] CC100/term_meta_bank_1.json'), load_cc100, Path('./scratch/Japanese/frequency/cc100.json')),
+        (Path('./scratch/Japanese/Yomichan Dictionaries/[Freq] Wikipedia v2/term_meta_bank_1.json'), load_wikipedia, Path('./scratch/Japanese/frequency/wikipedia.json')),
+    ]
+
+    for d in raw_dictionaries:
+        parsed_dict = d[1](d[0])
+        destination: Path = d[2]
+        destination.parent.mkdir(exist_ok=True, parents=True)
+        save_frequency(parsed_dict, d[2])
 
 def augment_kanji_examples():
     augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")
