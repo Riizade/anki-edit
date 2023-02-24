@@ -35,6 +35,11 @@ def get_notes_in_deck(deck_name: str) -> list[int]:
         }
     )['result']
 
+def get_cards_info(deck_name: str) -> list[dict]:
+    card_ids = get_cards_in_deck(deck_name)
+    card_infos = get_card_info(card_ids)
+    return card_infos
+
 # returns a list of (card, note)
 def get_cards_and_notes_in_deck(deck_name: str) -> list[(dict, dict)]:
     card_ids = get_cards_in_deck(deck_name)
@@ -50,6 +55,30 @@ def get_card_info(card_ids: list[int]) -> list[dict]:
             "cards": card_ids,
         }
     )['result']
+
+
+def set_card_values(card_id: int, fields: dict[str, str]) -> None:
+    keys = []
+    values = []
+    for key, value in fields.items():
+        keys.append(key)
+        values.append(value)
+
+    params = {
+        "card": card_id,
+        "keys": keys,
+        "newValues": values,
+        "warning_check": True,
+    }
+    result = ankiconnect_action(
+        "setSpecificValueOfCard",
+        params=params,
+    )
+
+    results = result['result']
+    for r in results:
+        if not r:
+            raise ValueError(f"operation failed\nrequest: {params}\nresult: {result}")
 
 # note ids to note info
 def get_note_info(note_ids: list[int]) -> list[dict]:

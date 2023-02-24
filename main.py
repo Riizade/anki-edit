@@ -11,9 +11,13 @@ from core.utils import print_utf8
 import typing
 from core.dictionaries.stardict import Stardict
 import genanki
+from core.transfer_anki_progress import transfer_progress
 
 def main() -> None:
-    create_decks()
+    transfer_japanese_progress()
+
+def transfer_japanese_progress() -> None:
+    transfer_progress("* Japanese Core 10k Recognition", "vocab", "Japanese", "term")
 
 def list_stardict_words() -> None:
     p = Path("scratch/Chinese/english/stardict-lazyworm-ce-2.4.2")
