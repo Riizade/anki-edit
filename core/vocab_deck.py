@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 import core.anki_connect as anki_connect
 from tqdm import tqdm
+import genanki
+import random
+from typing import Tuple
 
 @dataclass(frozen=True, slots=True)
 class Definition:
@@ -137,27 +140,35 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
     return VocabularyDeck(cards_list)
 
 
-def load_deck_into_anki(deck: VocabularyDeck, deck_name: str) -> None:
+def create_anki_deck(deck: VocabularyDeck, deck_name: str) -> genanki.Deck:
     print("creating anki deck", flush=True)
-    anki_connect.create_deck(deck_name)
-    create_model(deck, deck_name)
-    load_notes_into_anki(deck, deck_name)
+    deck_id = random.randrange(1 << 30, 1 << 31)
+    anki_deck = genanki.Deck(deck_id, deck_name, "a vocabulary memorization deck generated from several electronic dictionaries")
+    notes = create_notes(deck, deck_name)
+    print("adding cards to the deck", flush=True)
+    for note in tqdm(notes):
+        anki_deck.add_note(note)
+    return deck
 
-def create_model(deck: VocabularyDeck, deck_name: str) -> None:
-    # count how many fields we need for each set of definitions
+# counts how many fields we need for each set of definitions
+# returns max definitions for (native, english)
+def count_definitions(deck: VocabularyDeck) -> Tuple[int, int]:
     max_native_definitions = 0
     max_english_definitions = 0
-    max_machine_translated_definitions = 0
     for card in deck.cards:
         if len(card.native_definitions) > max_native_definitions:
             max_native_definitions = len(card.native_definitions)
         if len(card.english_definitions) > max_english_definitions:
             max_english_definitions = len(card.english_definitions)
-        if len(card.machine_translated_definitions) > max_machine_translated_definitions:
-            max_machine_translated_definitions = len(card.machine_translated_definitions)
 
+    return (max_native_definitions, max_english_definitions)
+
+def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
     # enumerate the fields needed in the model to hold all of our definitions
     field_names: list[str] = ["order", "term", "reading"]
+
+    # count max definitions per type
+    (max_native_definitions, max_english_definitions) = count_definitions(deck)
 
     for i in range(max_native_definitions):
         field_names.append(f"native_definition_source_{i}")
@@ -165,12 +176,9 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> None:
     for i in range(max_english_definitions):
         field_names.append(f"english_definition_source_{i}")
         field_names.append(f"english_definition_text_{i}")
-    for i in range(max_machine_translated_definitions):
-        field_names.append(f"machine_translated_definition_source_{i}")
-        field_names.append(f"machine_translated_definition_text_{i}")
 
     front_html = "<h1>{{term}}</h1>\n"
-    back_html = "<h1>{{term}}[{{reading}}]</h1>\n"
+    back_html = "<h1>{{term}}</h1>\n<p>{{reading}}</p>\n"
     back_html += "<h1>Native Definitions</h1>\n"
     for i in range(max_native_definitions):
         back_html += "<h2>{{native_definition_source_" + str(i) + "}}</h2>\n"
@@ -179,56 +187,70 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> None:
     for i in range(max_english_definitions):
         back_html += "<h2>{{english_definition_source_" + str(i) + "}}</h2>\n"
         back_html += "<p>{{hint:english_definition_text_" + str(i) + "}}</p>\n"
-    # TODO: uncomment once machine translated definitions are implemented
-    # back_html += "<h1>Machine-Translated Definitions</h1>\n"
-    # for i in range(max_machine_translated_definitions):
-    #     back_html += "<h2>{{machine_translated_definition_source_" + str(i) + "}}</h2>\n"
-    #     back_html += "<p>{{hint:machine_translated_definition_text_" + str(i) + "}}</p>\n"
 
-    anki_connect.create_model({
-        "modelName": f"{deck_name}::vocab",
-        "inOrderFields": field_names,
-        "isCloze": False,
-        "cardTemplates": [
+    model_id = random.randrange(1 << 30, 1 << 31)
+    return genanki.Model(
+        model_id=model_id,
+        name=f"{deck_name}::vocab",
+        fields=[{"name": field} for field in field_names],
+        templates=[
             {
                 "Name": f"{deck_name} Vocab Recogniton",
                 "Front": front_html,
                 "Back": back_html,
             }
         ]
-    })
+    )
 
 # loads the top N cards into Anki (limit = N)
-def load_notes_into_anki(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> None:
-    print("loading cards into anki", flush=True)
-    model_name = f"{deck_name}::vocab"
+def create_notes(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> list[genanki.Note]:
+    print("creating cards into anki", flush=True)
+
+    # create the model for the notes
+    model = create_model(deck, deck_name)
+
+    # count max definitions per type
+    # this is because genanki assigns fields by index, not by name
+    # since every card has a different number of definitions, we need to track the offsets for the fields
+    # we can use these numbers to determine how many empty fields to add to pad the field array to get to the correct offset
+    (max_native_definitions, max_english_definitions) = count_definitions(deck)
+
+    notes = []
 
     for card in tqdm(deck.cards[:limit]):
-        fields = {
-            "term": card.term,
-            "order": str(card.priority),
-        }
+        # define common fields
+        order = str(card.priority)
+        term = card.term
+        reading = card.reading
 
-        if card.reading is not None and isinstance(card.reading, str):
-            fields["reading"] = card.reading
+        # add definitions to an array for native definitions
+        native_definition_fields = []
+        for definition in card.native_definitions:
+            native_definition_fields.append(definition.source)
+            native_definition_fields.append(definition.definition)
 
-        for i, definition in enumerate(card.native_definitions):
-            fields[f"native_definition_source_{i}"] = definition.source
-            fields[f"native_definition_text_{i}"] = definition.definition
+        # pad the native definitions array to 2x the number of max possible definitions
+        # (because there's one field for the source, and one for the definition, so the length of the array should be 2x the max possible)
+        while len(native_definition_fields) < 2 * max_native_definitions:
+            native_definition_fields.append("")
 
-        for i, definition in enumerate(card.english_definitions):
-            fields[f"english_definition_source_{i}"] = definition.source
-            fields[f"english_definition_text_{i}"] = definition.definition
+        # repeat the above process for english definitions (although the padding may not matter since no fields come after the english definition fields)
+        english_definition_fields = []
+        for definition in card.english_definitions:
+            english_definition_fields.append(definition.source)
+            english_definition_fields.append(definition.definition)
+        while len(english_definition_fields) < 2 * max_english_definitions:
+            english_definition_fields.append("")
 
-        for i, definition in enumerate(card.machine_translated_definitions):
-            fields[f"machine_translated_definition_source_{i}"] = definition.source
-            fields[f"machine_translated_definition_text_{i}"] = definition.definition
+        # combine all fields together
+        fields = [order, term, reading] + native_definition_fields + english_definition_fields
 
-        note = {
-            "deckName": deck_name,
-            "modelName": model_name,
-            "fields": fields,
-        }
+        notes.append(genanki.Note(
+            model=model,
+            fields=fields,
+        ))
 
-        anki_connect.add_note(note)
+    return notes
+
+
 

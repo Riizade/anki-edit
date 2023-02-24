@@ -6,10 +6,11 @@ from core.utils import pprint_data
 from core.modify_kanji_deck import augment_examples
 from core.merge_jp_decks import read_decks
 from core.dictionaries.frequency import *
-from core.vocab_deck import load_deck_into_anki, load_deck_from_directory
+from core.vocab_deck import create_anki_deck, load_deck_from_directory
 from core.utils import print_utf8
 import typing
 from core.dictionaries.stardict import Stardict
+import genanki
 
 def main() -> None:
     create_decks()
@@ -32,7 +33,12 @@ def create_decks() -> None:
         deck = load_deck_from_directory(p)
         deck_name = p.stem
 
-        load_deck_into_anki(deck, deck_name)
+        anki_deck = create_anki_deck(deck, deck_name)
+        destination_file = p / f"{p.stem}.apkg"
+        print(f"saving deck to file {destination_file}", flush=True)
+
+        genanki.Package(anki_deck).write_to_file(destination_file)
+
 
 def convert_frequency_dictionaries() -> None:
     # list of tuples of (source name, filename, parsing function, destination filename)
