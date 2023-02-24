@@ -2,7 +2,6 @@ from __future__ import annotations
 from core.dictionaries.general import BasicDictionary
 from core.dictionaries.frequency import FrequencySource
 from dataclasses import dataclass
-from core.deepl import translate_to_english
 import sys
 from pathlib import Path
 import core.anki_connect as anki_connect
@@ -77,9 +76,10 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
             cards[entry.term].native_definitions.append(definition)
 
             # translate the definition and do the same
-            machine_translated_definition = translate_to_english(entry.definition)
-            mt_def = Definition(dictionary.name, machine_translated_definition)
-            cards[entry.term].machine_translated_definitions.append(mt_def)
+            # TODO: implement in a cost-effective way
+            # machine_translated_definition = translate_to_english(entry.definition)
+            # mt_def = Definition(dictionary.name, machine_translated_definition)
+            # cards[entry.term].machine_translated_definitions.append(mt_def)
 
     print("organizing english dictionaries", flush=True)
     for dictionary in english_dictionaries:
@@ -179,10 +179,11 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> None:
     for i in range(max_english_definitions):
         back_html += "<h2>{{english_definition_source_" + str(i) + "}}</h2>\n"
         back_html += "<p>{{hint:english_definition_text_" + str(i) + "}}</p>\n"
-    back_html += "<h1>Machine-Translated Definitions</h1>\n"
-    for i in range(max_machine_translated_definitions):
-        back_html += "<h2>{{machine_translated_definition_source_" + str(i) + "}}</h2>\n"
-        back_html += "<p>{{hint:machine_translated_definition_text_" + str(i) + "}}</p>\n"
+    # TODO: uncomment once machine translated definitions are implemented
+    # back_html += "<h1>Machine-Translated Definitions</h1>\n"
+    # for i in range(max_machine_translated_definitions):
+    #     back_html += "<h2>{{machine_translated_definition_source_" + str(i) + "}}</h2>\n"
+    #     back_html += "<p>{{hint:machine_translated_definition_text_" + str(i) + "}}</p>\n"
 
     anki_connect.create_model({
         "modelName": f"{deck_name}::vocab",
