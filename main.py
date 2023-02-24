@@ -41,7 +41,30 @@ def create_decks() -> None:
         # end debug
 
         deck_name = p.stem
+
+        displayed_dictionaries = set()
         # uncomment
+        for c in deck.cards:
+            for d in c.native_definitions:
+                if d.source not in displayed_dictionaries:
+                    displayed_dictionaries.add(d.source)
+                    print("-"*100, flush=True)
+                    print("Native Source", flush=True)
+                    pprint_data(d.source)
+                    print("-"*100, flush=True)
+                    pprint_data(c.term)
+                    pprint_data(d.definition)
+                    print("-"*100, flush=True)
+            for d in c.english_definitions:
+                if d.source not in displayed_dictionaries:
+                    displayed_dictionaries.add(d.source)
+                    print("-"*100, flush=True)
+                    print("English Source", flush=True)
+                    pprint_data(d.source)
+                    print("-"*100, flush=True)
+                    pprint_data(c.term)
+                    pprint_data(d.definition)
+                    print("-"*100, flush=True)
         # load_deck_into_anki(deck, deck_name)
 
 def convert_frequency_dictionaries() -> None:
