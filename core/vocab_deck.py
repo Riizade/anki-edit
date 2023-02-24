@@ -148,7 +148,7 @@ def create_anki_deck(deck: VocabularyDeck, deck_name: str) -> genanki.Deck:
     print("adding cards to the deck", flush=True)
     for note in tqdm(notes):
         anki_deck.add_note(note)
-    return deck
+    return anki_deck
 
 # counts how many fields we need for each set of definitions
 # returns max definitions for (native, english)
@@ -195,9 +195,9 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
         fields=[{"name": field} for field in field_names],
         templates=[
             {
-                "Name": f"{deck_name} Vocab Recogniton",
-                "Front": front_html,
-                "Back": back_html,
+                "name": f"{deck_name} Vocab Recogniton",
+                "qfmt": front_html,
+                "afmt": back_html,
             }
         ]
     )
@@ -221,7 +221,8 @@ def create_notes(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> li
         # define common fields
         order = str(card.priority)
         term = card.term
-        reading = card.reading
+        # TODO: at some point before this, card.reading becomes a (None,) for some decks, and I'm not sure why
+        reading = card.reading if isinstance(card.reading, str) else ""
 
         # add definitions to an array for native definitions
         native_definition_fields = []
@@ -243,7 +244,14 @@ def create_notes(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> li
             english_definition_fields.append("")
 
         # combine all fields together
-        fields = [order, term, reading] + native_definition_fields + english_definition_fields
+        fields = [order, term, reading]
+        fields.extend(native_definition_fields)
+        fields.extend(english_definition_fields)
+        from core.utils import pprint_data
+        for f in fields:
+            if not isinstance(f, str):
+                pprint_data(fields)
+                pprint_data(f)
 
         notes.append(genanki.Note(
             model=model,

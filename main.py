@@ -24,9 +24,9 @@ def list_stardict_words() -> None:
 
 def create_decks() -> None:
     deck_paths = [
+        Path("./scratch/Italian"),
         Path("./scratch/Chinese"),
         Path("./scratch/Japanese"),
-        Path("./scratch/Italian"),
     ]
 
     for p in deck_paths:
