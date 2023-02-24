@@ -9,6 +9,15 @@ anki_connect_version = 6
 def get_deck_names_and_ids() -> dict[str, int]:
     return ankiconnect_action("deckNamesAndIds")['result']
 
+# returns deck's integer id
+def create_deck(deck_name: str) -> int:
+    return ankiconnect_action(
+        action="createDeck",
+        params={
+            "deck": deck_name,
+        }
+    )['result']
+
 def get_cards_in_deck(deck_name: str) -> list[int]:
     return ankiconnect_action(
         action="findCards",
@@ -71,6 +80,13 @@ def add_note(note: dict):
         params={
             "note": note,
         }
+    )
+
+
+def create_model(model: dict):
+    ankiconnect_action(
+        action="createModel",
+        params=model,
     )
 
 

@@ -5,15 +5,21 @@ from dataclasses import dataclass
 from core.deepl import translate_to_english
 import sys
 from pathlib import Path
+import core.anki_connect as anki_connect
+
+@dataclass(frozen=True, slots=True)
+class Definition:
+    source: str
+    definition: str
 
 @dataclass(frozen=False, slots=True)
 class VocabularyCard:
     priority: int # the order the card should show up when studying
     term: str # the term/word
     reading: str | None # the pronunciation of the word (mostly for Japanese furigana/Chinese pinyin)
-    native_definitions: list[str] # definitions for the word in its own language
-    english_definitions: list[str] # English definitions for the word
-    machine_translated_definitions: list[str] # definitions for the word machine translated to English from the native_definitions
+    native_definitions: list[Definition] # definitions for the word in its own language
+    english_definitions: list[Definition] # English definitions for the word
+    machine_translated_definitions: list[Definition] # definitions for the word machine translated to English from the native_definitions
 
     @staticmethod
     def new() -> VocabularyCard:
@@ -60,12 +66,12 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
             # update the card's data
             cards[entry.term].term = entry.term
             cards[entry.term].reading = entry.reading,
-            definition = f"<h2>{dictionary.name}</h2>\n\n{entry.definition}"
+            definition = Definition(dictionary.name, entry.definition)
             cards[entry.term].native_definitions.append(definition)
 
             # translate the definition and do the same
             machine_translated_definition = translate_to_english(entry.definition)
-            mt_def = f"<h2>{dictionary.name}</h2>\n\n{machine_translated_definition}"
+            mt_def = Definition(dictionary.name, machine_translated_definition)
             cards[entry.term].machine_translated_definitions.append(mt_def)
 
 
@@ -78,7 +84,7 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
             # update the card's data
             cards[entry.term].term = entry.term
             cards[entry.term].reading = entry.reading,
-            definition = f"<h2>{dictionary.name}</h2>\n\n{entry.definition}"
+            definition = Definition(dictionary.name, entry.definition)
             cards[entry.term].english_definitions.append(definition)
 
 
@@ -121,7 +127,94 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
         card.priority = i + 1 # start at 1 (1-indexed)
 
 
-def load_deck_into_anki(deck: VocabularyDeck):
-    # TODO: implement
-    raise NotImplementedError()
+def load_deck_into_anki(deck: VocabularyDeck, deck_name: str):
+    anki_connect.create_deck(deck_name)
+    create_model(deck, deck_name)
+    load_notes_into_anki(deck, deck_name)
+
+def create_model(deck: VocabularyDeck, deck_name: str):
+    # count how many fields we need for each set of definitions
+    max_native_definitions = 0
+    max_english_definitions = 0
+    max_machine_translated_definitions = 0
+    for card in deck.cards:
+        if len(card.native_definitions) > max_native_definitions:
+            max_native_definitions = len(card.native_definitions)
+        if len(card.english_definitions) > max_english_definitions:
+            max_english_definitions = len(card.english_definitions)
+        if len(card.machine_translated_definitions) > max_machine_translated_definitions:
+            max_machine_translated_definitions = len(card.machine_translated_definitions)
+
+    # enumerate the fields needed in the model to hold all of our definitions
+    field_names: list[str] = ["order", "term", "reading"]
+
+    for i in max_native_definitions:
+        field_names.append(f"native_definition_source_{i}")
+        field_names.append(f"native_definition_text_{i}")
+    for i in max_english_definitions:
+        field_names.append(f"english_definition_source_{i}")
+        field_names.append(f"english_definition_text_{i}")
+    for i in max_machine_translated_definitions:
+        field_names.append(f"machine_translated_definition_source_{i}")
+        field_names.append(f"machine_translated_definition_text_{i}")
+
+    front_html = "<h1>{{term}}</h1>\n"
+    back_html = "<h1>{{term}}[{{reading}}]</h1>\n"
+    back_html += "<h1>Native Definitions</h1>\n"
+    for i in max_native_definitions:
+        back_html += "<h2>{{native_definition_source_" + i + "}}</h2>\n"
+        back_html += "<p>{{hint:native_definition_text_" + i + "}}</p>\n"
+    back_html += "<h1>English Definitions</h1>\n"
+    for i in max_english_definitions:
+        back_html += "<h2>{{english_definition_source_" + i + "}}</h2>\n"
+        back_html += "<p>{{hint:english_definition_text_" + i + "}}</p>\n"
+    back_html += "<h1>Machine-Translated Definitions</h1>\n"
+    for i in max_machine_translated_definitions:
+        back_html += "<h2>{{machine_translated_definition_source_" + i + "}}</h2>\n"
+        back_html += "<p>{{hint:machine_translated_definition_text_" + i + "}}</p>\n"
+
+    anki_connect.create_model({
+        "modelName": f"{deck_name}::vocab",
+        "inOrderFields": field_names,
+        "isCloze": False,
+        "cardTemplates": [
+            {
+                "Name": f"{deck_name} Vocab Recogniton",
+                "Front": front_html,
+                "Back": back_html,
+            }
+        ]
+    })
+
+
+def load_notes_into_anki(deck: VocabularyDeck, deck_name: str):
+    model_name = f"{deck_name}::vocab"
+
+    for card in deck.cards:
+        fields = {
+            "term": card.term,
+            "order": card.priority,
+        }
+
+        if card.reading is not None:
+            fields["reading"] = card.reading
+
+        for i, definition in enumerate(card.native_definitions):
+            fields[f"native_definition_source_{i}"] = definition.source
+            fields[f"native_definition_text_{i}"] = definition.definition
+
+        for i, definition in enumerate(card.english_definitions):
+            fields[f"english_definition_source_{i}"] = definition.source
+            fields[f"english_definition_text_{i}"] = definition.definition
+
+        for i, definition in enumerate(card.machine_translated_definitions):
+            fields[f"machine_translated_definition_source_{i}"] = definition.source
+            fields[f"machine_translated_definition_text_{i}"] = definition.definition
+
+        note = {
+            "deckName": deck_name,
+            "modelName": model_name,
+            "fields": fields,
+            "tags": ["anki-edit", "generated"]
+        }
 
