@@ -2,6 +2,7 @@ from dataclasses_serialization.json import JSONSerializer
 from pathlib import Path
 import sys
 from pprint import pformat
+from typing import Any
 
 # takes basic collections (e.g., list, dict) and dataclasses as data
 def save_to_cache(data, cache_path: Path):
@@ -22,11 +23,11 @@ def cached_load(load_function: callable, type, cache_path: Path) -> any:
         save_to_cache(data, cache_path)
         return data
 
-def pprint_data(data):
+def pprint_data(data: Any) -> None:
     sys.stdout.buffer.write(pformat(data).encode("utf8"))
     sys.stdout.buffer.write("\n".encode("utf8"))
 
-def print_utf8(d):
+def print_utf8(d: Any) -> None:
     sys.stdout.buffer.write(str(d).encode("utf8") + "\n".encode("utf8"))
 
 def static_vars(**kwargs):

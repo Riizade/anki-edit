@@ -6,11 +6,45 @@ from core.utils import pprint_data
 from core.modify_kanji_deck import augment_examples
 from core.merge_jp_decks import read_decks
 from core.dictionaries.frequency import *
+from core.vocab_deck import load_deck_into_anki, load_deck_from_directory
+from core.utils import print_utf8
+import typing
+from core.dictionaries.stardict import Stardict
 
-def main():
-    convert_frequency_dictionaries()
+def main() -> None:
+    create_decks()
 
-def convert_frequency_dictionaries():
+def list_stardict_words() -> None:
+    p = Path("scratch/Chinese/english/stardict-lazyworm-ce-2.4.2")
+    d = Stardict.from_dir(p)
+    for e in d.entries:
+        print_utf8(e.term)
+
+
+def create_decks() -> None:
+    deck_paths = [
+        Path("./scratch/Chinese"),
+        Path("./scratch/Japanese"),
+        Path("./scratch/Italian"),
+    ]
+
+    for p in deck_paths:
+        deck = load_deck_from_directory(p)
+        # debug
+        limit = 40000
+        total_definitions = 0
+        for card in deck.cards[:limit]:
+            total_definitions += len(card.english_definitions) + len(card.native_definitions)
+
+        average = float(total_definitions) / float(limit)
+        print(f"average definitions per card: {average:.2f}")
+        # end debug
+
+        deck_name = p.stem
+        # uncomment
+        # load_deck_into_anki(deck, deck_name)
+
+def convert_frequency_dictionaries() -> None:
     # list of tuples of (source name, filename, parsing function, destination filename)
     raw_dictionaries = [
         ("subtlex", Path('./scratch/Chinese/subtlex-ch.utf8'), load_subtlex_tsv, Path('./scratch/Chinese/frequency/subtlex.json')),
@@ -25,23 +59,23 @@ def convert_frequency_dictionaries():
         print_utf8(f"converting {d[1]}")
         source_name = d[0]
         source_file = d[1]
-        function = d[2]
+        function: typing.Any = d[2]
         destination: Path = d[3]
         parsed_dict = function(source_file, source_name)
         destination.parent.mkdir(exist_ok=True, parents=True)
         save_frequency(parsed_dict, destination)
 
-def augment_kanji_examples():
+def augment_kanji_examples() -> None:
     augment_examples(deck_name="* JLPT N0 Recognition", kanji_field="Kanji", examples_field="Examples")
     augment_examples(deck_name="* JLPT N1 Recognition", kanji_field="Kanji", examples_field="Examples")
 
-def analyze_vocab(vocab_list: list[JMDEntry]):
+def analyze_vocab(vocab_list: list[JMDEntry]) -> None:
     total = len(vocab_list)
     for vocab in vocab_list:
         pprint_data(vocab)
 
 
-def analyze_kanji(all_kanji: list[Kanji]):
+def analyze_kanji(all_kanji: list[Kanji]) -> None:
     total = len(all_kanji)
     no_examples = 0
     no_examples_jlpt = 0

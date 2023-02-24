@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from dataclasses_serialization.json import JSONSerializer
 import csv
-from core.utils import print_utf8
+import dacite
 
 @dataclass(frozen=True)
 class FrequencyEntry:
@@ -19,7 +19,7 @@ class FrequencySource:
 
     @staticmethod
     def from_file(path: Path) -> FrequencySource:
-        load_frequency(path)
+        return load_frequency(path)
 
 def load_yomichan(filename: Path, source_name: str) -> FrequencySource:
     entries: list[FrequencyEntry] = []
@@ -57,7 +57,7 @@ def load_yomichan(filename: Path, source_name: str) -> FrequencySource:
         entries=entries,
     )
 
-def load_subtlex_csv(filename: Path, source_name: str = "subtlex") -> list[FrequencyEntry]:
+def load_subtlex_csv(filename: Path, source_name: str = "subtlex") -> FrequencySource:
     entries: list[FrequencyEntry] = []
     with open(filename, 'r', encoding='utf8') as f:
         reader = csv.DictReader(f, delimiter=',', quotechar='"')
@@ -73,7 +73,7 @@ def load_subtlex_csv(filename: Path, source_name: str = "subtlex") -> list[Frequ
         entries=entries,
     )
 
-def load_subtlex_tsv(filename: Path, source_name: str = "subtlex") -> list[FrequencyEntry]:
+def load_subtlex_tsv(filename: Path, source_name: str = "subtlex") -> FrequencySource:
     entries: list[FrequencyEntry] = []
     with open(filename, 'r', encoding='utf8') as f:
         reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -89,7 +89,7 @@ def load_subtlex_tsv(filename: Path, source_name: str = "subtlex") -> list[Frequ
         entries=entries,
     )
 
-def save_frequency(source: FrequencySource, path: Path):
+def save_frequency(source: FrequencySource, path: Path) -> None:
     with open(path, 'w', encoding='utf8') as f:
         jsons = json.dumps(JSONSerializer.serialize(source))
         f.write(jsons)
@@ -97,4 +97,6 @@ def save_frequency(source: FrequencySource, path: Path):
 def load_frequency(path: Path) -> FrequencySource:
     with open(path, 'r', encoding='utf8') as f:
         s = f.read()
-        return JSONSerializer.deserialize(s)
+        json_data = json.loads(s)
+        deserialized: FrequencySource = dacite.from_dict(FrequencySource, json_data)
+        return deserialized

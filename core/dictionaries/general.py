@@ -31,6 +31,7 @@ class BasicDictionary:
 
 def load_dictionary_from_path(path: Path) -> BasicDictionary:
     dictionary_type = detect_dictionary_type(path)
+    d: YomichanDictionary | Stardict | None = None
     if dictionary_type == DictionaryType.STARDICT:
         d = Stardict.from_dir(path)
     elif dictionary_type == DictionaryType.YOMICHAN:
@@ -41,7 +42,7 @@ def load_dictionary_from_path(path: Path) -> BasicDictionary:
     return load_dictionary_from_other(d)
 
 def load_dictionary_from_other(d: Stardict | YomichanDictionary) -> BasicDictionary:
-    if d.__class__ == Stardict:
+    if isinstance(d, Stardict):
         return load_dictionary_from_stardict(d)
     elif d.__class__ == YomichanDictionary:
         return load_dictionary_from_yomichan(d)
@@ -57,7 +58,7 @@ def load_dictionary_from_stardict(d: Stardict) -> BasicDictionary:
             definition=entry.entry,
         ))
 
-    BasicDictionary(
+    return BasicDictionary(
         name=d.name,
         entries=entries,
     )
@@ -71,14 +72,14 @@ def load_dictionary_from_yomichan(d: YomichanDictionary) -> BasicDictionary:
             definition='\n\n'.join(entry.definitions),
         ))
 
-    BasicDictionary(
+    return BasicDictionary(
         name=d.name,
         entries=entries,
     )
 
 def detect_dictionary_type(path: Path) -> DictionaryType:
-    yomichan_extensions = set('.json')
-    stardict_extensions = set('.dict', '.dict.dz', '.ifo', '.idx')
+    yomichan_extensions = set(['.json'])
+    stardict_extensions = set(['.dict', '.dict.dz', '.ifo', '.idx'])
 
     yomichan_count = 0
     stardict_count = 0

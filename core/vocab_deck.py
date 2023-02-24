@@ -6,6 +6,7 @@ from core.deepl import translate_to_english
 import sys
 from pathlib import Path
 import core.anki_connect as anki_connect
+from tqdm import tqdm
 
 @dataclass(frozen=True, slots=True)
 class Definition:
@@ -37,16 +38,20 @@ class VocabularyDeck:
     cards: list[VocabularyCard]
 
 def load_deck_from_directory(path: Path) -> VocabularyDeck:
+    print(f"loading deck from directory {path}", flush=True)
     native_dictionaries = []
     english_dictionaries = []
     frequency_sources = []
 
+    print("loading native dictionaries", flush=True)
     for native_dir in (path / 'native').iterdir():
         native_dictionaries.append(BasicDictionary.from_dir(native_dir))
 
+    print("loading english dictionaries", flush=True)
     for english_dir in (path / 'english').iterdir():
         english_dictionaries.append(BasicDictionary.from_dir(english_dir))
 
+    print("loading frequency dictionaries", flush=True)
     for frequency_source in (path / 'frequency').iterdir():
         frequency_sources.append(FrequencySource.from_file(frequency_source))
 
@@ -54,9 +59,11 @@ def load_deck_from_directory(path: Path) -> VocabularyDeck:
     return create_deck(native_dictionaries=native_dictionaries, english_dictionaries=english_dictionaries, frequency_sources=frequency_sources)
 
 def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries: list[BasicDictionary], frequency_sources: list[FrequencySource]) -> VocabularyDeck:
+    print("creating deck from sources", flush=True)
     # cards by term
     cards: dict[str, VocabularyCard] = {}
 
+    print("organizing native dictionaries", flush=True)
     for dictionary in native_dictionaries:
         # for each entry in a native dictionary
         for entry in dictionary.entries:
@@ -74,7 +81,7 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
             mt_def = Definition(dictionary.name, machine_translated_definition)
             cards[entry.term].machine_translated_definitions.append(mt_def)
 
-
+    print("organizing english dictionaries", flush=True)
     for dictionary in english_dictionaries:
         # for each entry in an English dictionary
         for entry in dictionary.entries:
@@ -88,6 +95,7 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
             cards[entry.term].english_definitions.append(definition)
 
 
+    print("determining term frequency", flush=True)
     # dict from term -> frequency ranking
     frequency: dict[str, float] = {}
     # the number of sources contributing to the frequency ranking
@@ -126,13 +134,16 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
     for i, card in enumerate(cards_list):
         card.priority = i + 1 # start at 1 (1-indexed)
 
+    return VocabularyDeck(cards_list)
 
-def load_deck_into_anki(deck: VocabularyDeck, deck_name: str):
+
+def load_deck_into_anki(deck: VocabularyDeck, deck_name: str) -> None:
+    print("creating anki deck", flush=True)
     anki_connect.create_deck(deck_name)
     create_model(deck, deck_name)
     load_notes_into_anki(deck, deck_name)
 
-def create_model(deck: VocabularyDeck, deck_name: str):
+def create_model(deck: VocabularyDeck, deck_name: str) -> None:
     # count how many fields we need for each set of definitions
     max_native_definitions = 0
     max_english_definitions = 0
@@ -148,30 +159,30 @@ def create_model(deck: VocabularyDeck, deck_name: str):
     # enumerate the fields needed in the model to hold all of our definitions
     field_names: list[str] = ["order", "term", "reading"]
 
-    for i in max_native_definitions:
+    for i in range(max_native_definitions):
         field_names.append(f"native_definition_source_{i}")
         field_names.append(f"native_definition_text_{i}")
-    for i in max_english_definitions:
+    for i in range(max_english_definitions):
         field_names.append(f"english_definition_source_{i}")
         field_names.append(f"english_definition_text_{i}")
-    for i in max_machine_translated_definitions:
+    for i in range(max_machine_translated_definitions):
         field_names.append(f"machine_translated_definition_source_{i}")
         field_names.append(f"machine_translated_definition_text_{i}")
 
     front_html = "<h1>{{term}}</h1>\n"
     back_html = "<h1>{{term}}[{{reading}}]</h1>\n"
     back_html += "<h1>Native Definitions</h1>\n"
-    for i in max_native_definitions:
-        back_html += "<h2>{{native_definition_source_" + i + "}}</h2>\n"
-        back_html += "<p>{{hint:native_definition_text_" + i + "}}</p>\n"
+    for i in range(max_native_definitions):
+        back_html += "<h2>{{native_definition_source_" + str(i) + "}}</h2>\n"
+        back_html += "<p>{{hint:native_definition_text_" + str(i) + "}}</p>\n"
     back_html += "<h1>English Definitions</h1>\n"
-    for i in max_english_definitions:
-        back_html += "<h2>{{english_definition_source_" + i + "}}</h2>\n"
-        back_html += "<p>{{hint:english_definition_text_" + i + "}}</p>\n"
+    for i in range(max_english_definitions):
+        back_html += "<h2>{{english_definition_source_" + str(i) + "}}</h2>\n"
+        back_html += "<p>{{hint:english_definition_text_" + str(i) + "}}</p>\n"
     back_html += "<h1>Machine-Translated Definitions</h1>\n"
-    for i in max_machine_translated_definitions:
-        back_html += "<h2>{{machine_translated_definition_source_" + i + "}}</h2>\n"
-        back_html += "<p>{{hint:machine_translated_definition_text_" + i + "}}</p>\n"
+    for i in range(max_machine_translated_definitions):
+        back_html += "<h2>{{machine_translated_definition_source_" + str(i) + "}}</h2>\n"
+        back_html += "<p>{{hint:machine_translated_definition_text_" + str(i) + "}}</p>\n"
 
     anki_connect.create_model({
         "modelName": f"{deck_name}::vocab",
@@ -186,17 +197,18 @@ def create_model(deck: VocabularyDeck, deck_name: str):
         ]
     })
 
-
-def load_notes_into_anki(deck: VocabularyDeck, deck_name: str):
+# loads the top N cards into Anki (limit = N)
+def load_notes_into_anki(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> None:
+    print("loading cards into anki", flush=True)
     model_name = f"{deck_name}::vocab"
 
-    for card in deck.cards:
+    for card in tqdm(deck.cards[:limit]):
         fields = {
             "term": card.term,
-            "order": card.priority,
+            "order": str(card.priority),
         }
 
-        if card.reading is not None:
+        if card.reading is not None and isinstance(card.reading, str):
             fields["reading"] = card.reading
 
         for i, definition in enumerate(card.native_definitions):
@@ -215,6 +227,7 @@ def load_notes_into_anki(deck: VocabularyDeck, deck_name: str):
             "deckName": deck_name,
             "modelName": model_name,
             "fields": fields,
-            "tags": ["anki-edit", "generated"]
         }
+
+        anki_connect.add_note(note)
 

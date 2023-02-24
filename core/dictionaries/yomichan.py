@@ -4,6 +4,7 @@ from pathlib import Path
 from dataclasses import dataclass
 import os
 import re
+from core.utils import print_utf8
 
 # fields with "fieldX" names are fields for which I have no idea what it's supposed to contain
 @dataclass(frozen=True)
@@ -28,12 +29,13 @@ class YomichanDictionary:
         return load_dictionary(path)
 
 # Path must point to the directory containing the dictionary's JSON files
-def load_dictionary(path: Path):
+def load_dictionary(path: Path) -> YomichanDictionary:
+    print_utf8(f"loading Yomichan dict from {path}")
 
     term_bank_re = re.compile(r"term_bank_[0-9]+")
 
     term_banks: list[Path] = []
-    index: Path = []
+    index: Path | None = None
 
     # list all files in the directory
     for directory_entry in path.iterdir():
@@ -47,32 +49,46 @@ def load_dictionary(path: Path):
                 term_banks.append(directory_entry)
 
     # extract data from the index
-    index_data = json.load(index)
-    name = index_data['title']
-    revision = index_data['revision']
+    with open(index, 'r', encoding='utf8') as index_file:
+        index_data = json.load(index_file)
+        name = index_data['title']
+        revision = index_data['revision']
 
-    # parse all terms from the term bank
-    terms: list[YomichanDictionaryEntry] = []
+        # parse all terms from the term bank
+        terms: list[YomichanDictionaryEntry] = []
 
-    for term_bank in term_banks:
-        bank_data = json.load(term_bank)
-        # the term bank is an array of terms
-        for term_data in bank_data:
-            # each term is an array of fields (0-7, 8 total fields)
-            term = YomichanDictionaryEntry(
-                term=term_data[0],
-                reading=term_data[1],
-                field3=term_data[2],
-                field4=term_data[3],
-                field5=term_data[4],
-                definitions=term_data[5],
-                entry_order=term_data[6],
-                field_8=term_data[7]
-            )
-            terms.append(term)
+        for term_bank in term_banks:
+            with open(term_bank, 'r', encoding='utf8') as term_bank_file:
+                bank_data = json.load(term_bank_file)
+                # the term bank is an array of terms
+                for term_data in bank_data:
+                    # clean definitions
+                    raw_definitions = term_data[5]
+                    definitions = [clean_definition(d) for d in raw_definitions]
 
-    return YomichanDictionary(
-        name=name,
-        revision=revision,
-        entries=terms,
-    )
+                    # each term is an array of fields (0-7, 8 total fields)
+                    term = YomichanDictionaryEntry(
+                        term=term_data[0],
+                        reading=term_data[1],
+                        field3=term_data[2],
+                        field4=term_data[3],
+                        field5=term_data[4],
+                        definitions=definitions,
+                        entry_order=term_data[6],
+                        field8=term_data[7]
+                    )
+                    terms.append(term)
+
+        return YomichanDictionary(
+            name=name,
+            revision=revision,
+            entries=terms,
+        )
+
+def clean_definition(definition: str | dict) -> str:
+    if isinstance(definition, str):
+        return definition
+    elif isinstance(definition, dict):
+        return '\n'.join([d for d in definition['content'] if isinstance(d, str)])
+    else:
+        raise ValueError(f"Cannot clean definition {definition}")
