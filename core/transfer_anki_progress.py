@@ -17,7 +17,7 @@ def transfer_progress(source_deck: str, source_field: str, destination_deck: str
         key = destination_card["fields"][destination_field]["value"]
         destination_cards_map[key] = destination_card
 
-    progress_fields = ['interval', 'reps', 'lapses', 'left', 'type', 'due', 'factor']
+    progress_fields = ['interval', 'reps', 'lapses', 'left', 'type', 'due', 'factor', 'queue']
 
     print("transferring progress via ankiconnect", flush=True)
     count = 0
