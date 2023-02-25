@@ -177,16 +177,33 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
         field_names.append(f"english_definition_source_{i}")
         field_names.append(f"english_definition_text_{i}")
 
-    front_html = "<h1>{{term}}</h1>\n"
-    back_html = "<h1>{{term}}</h1>\n<p>{{reading}}</p>\n"
-    back_html += "<h1>Native Definitions</h1>\n"
+    front_html = "<h1 class=\"term\">{{term}}</h1>\n"
+    back_html = "<h1 class=\"term\">{{term}}</h1>\n<p>{{reading}}</p>\n"
+    back_html += "<h1 class=\"section_header\">Native Definitions</h1>\n"
     for i in range(max_native_definitions):
-        back_html += "<h2>{{native_definition_source_" + str(i) + "}}</h2>\n"
-        back_html += "<p>{{hint:native_definition_text_" + str(i) + "}}</p>\n"
-    back_html += "<h1>English Definitions</h1>\n"
+        back_html += "<h2 class=\"source_name\">{{native_definition_source_" + str(i) + "}}</h2>\n"
+        back_html += "<p class=\"definition\">{{hint:native_definition_text_" + str(i) + "}}</p>\n"
+    back_html += "<h1 class=\"section_header\">English Definitions</h1>\n"
     for i in range(max_english_definitions):
-        back_html += "<h2>{{english_definition_source_" + str(i) + "}}</h2>\n"
-        back_html += "<p>{{hint:english_definition_text_" + str(i) + "}}</p>\n"
+        back_html += "<h2 class=\"source_name\">{{english_definition_source_" + str(i) + "}}</h2>\n"
+        back_html += "<p class=\"definition\">{{hint:english_definition_text_" + str(i) + "}}</p>\n"
+
+    # TODO: test if this css works as intended
+    css = """
+    .card {
+        text-align: center;
+    }
+
+    .term {
+        text-size: 45pt;
+    }
+
+    .section_header {}
+
+    .source_name {}
+
+    .definition {}
+    """
 
     model_id = random.randrange(1 << 30, 1 << 31)
     return genanki.Model(
@@ -199,7 +216,8 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
                 "qfmt": front_html,
                 "afmt": back_html,
             }
-        ]
+        ],
+        css=css,
     )
 
 # loads the top N cards into Anki (limit = N)
