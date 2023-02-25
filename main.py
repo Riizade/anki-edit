@@ -9,21 +9,19 @@ from core.dictionaries.frequency import *
 from core.vocab_deck import create_anki_deck, load_deck_from_directory
 from core.utils import print_utf8
 import typing
-from core.dictionaries.stardict import Stardict
 import genanki
 from core.transfer_anki_progress import transfer_progress
+import sys
+import locale
 
 def main() -> None:
-    transfer_japanese_progress()
+    print(sys.getfilesystemencoding())
+    print(sys.getdefaultencoding())
+    print(locale.getpreferredencoding())
+    create_decks()
 
 def transfer_japanese_progress() -> None:
     transfer_progress("* Japanese Core 10k Recognition", "vocab", "Japanese", "term")
-
-def list_stardict_words() -> None:
-    p = Path("scratch/Chinese/english/stardict-lazyworm-ce-2.4.2")
-    d = Stardict.from_dir(p)
-    for e in d.entries:
-        print_utf8(e.term)
 
 
 def create_decks() -> None:
