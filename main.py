@@ -11,13 +11,8 @@ from core.utils import print_utf8
 import typing
 import genanki
 from core.transfer_anki_progress import transfer_progress
-import sys
-import locale
 
 def main() -> None:
-    print(sys.getfilesystemencoding())
-    print(sys.getdefaultencoding())
-    print(locale.getpreferredencoding())
     create_decks()
 
 def transfer_japanese_progress() -> None:

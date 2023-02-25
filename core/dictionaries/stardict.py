@@ -1,5 +1,5 @@
 from __future__ import annotations
-from core.pystardict import Dictionary
+from pystardict import Dictionary
 from pathlib import Path
 from dataclasses import dataclass
 
