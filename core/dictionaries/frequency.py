@@ -59,11 +59,17 @@ def load_yomichan(filename: Path, source_name: str) -> FrequencySource:
 
 def load_subtlex_csv(filename: Path, source_name: str = "subtlex") -> FrequencySource:
     entries: list[FrequencyEntry] = []
+    stored_lemmas = set()
     with open(filename, 'r', encoding='utf8') as f:
         reader = csv.DictReader(f, delimiter=',', quotechar='"')
         for idx, row in enumerate(reader):
+            term = row['dom_lemma']
+            # only store the term the first time we see it (because the frequency list contains one entry for each conjugation seen)
+            if term in stored_lemmas:
+                continue
+            stored_lemmas.add(term)
             entries.append(FrequencyEntry(
-                term=row["spelling"],
+                term=row["dom_lemma"],
                 reading=None,
                 ranking=idx,
             ))

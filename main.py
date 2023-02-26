@@ -49,7 +49,7 @@ def convert_frequency_dictionaries() -> None:
     ]
 
     for d in raw_dictionaries:
-        print_utf8(f"converting {d[1]}")
+        print_utf8(f"converting {d[1]}", flush=True)
         source_name = d[0]
         source_file = d[1]
         function: typing.Any = d[2]

@@ -182,11 +182,11 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
     back_html += "<h1 class=\"section_header\">Native Definitions</h1>\n"
     for i in range(max_native_definitions):
         back_html += "<h2 class=\"source_name\">{{native_definition_source_" + str(i) + "}}</h2>\n"
-        back_html += "<p class=\"definition\">{{hint:native_definition_text_" + str(i) + "}}</p>\n"
+        back_html += "<p class=\"definition\">{{native_definition_text_" + str(i) + "}}</p>\n"
     back_html += "<h1 class=\"section_header\">English Definitions</h1>\n"
     for i in range(max_english_definitions):
         back_html += "<h2 class=\"source_name\">{{english_definition_source_" + str(i) + "}}</h2>\n"
-        back_html += "<p class=\"definition\">{{hint:english_definition_text_" + str(i) + "}}</p>\n"
+        back_html += "<p class=\"definition\">{{english_definition_text_" + str(i) + "}}</p>\n"
 
     # TODO: test if this css works as intended
     css = """
