@@ -104,7 +104,17 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
     # the number of sources contributing to the frequency ranking
     frequency_num_sources: dict[str, float] = {}
     for source in frequency_sources:
-        for entry in source.entries:
+        # some frequency sources have multiple entries for the same term (because of homographs)
+        # we want to use only the first entry from each source, because the homograph disambiguation will be solved via dictionary entries
+        # so we track which terms have already been added
+        added = set()
+        for i, entry in enumerate(source.entries):
+            # skip terms we've already added from this source
+            if entry.term in added:
+                continue
+            else:
+                added.add(entry.term)
+
             if entry.term not in frequency:
                 frequency_num_sources[entry.term] = 1
                 frequency[entry.term] = float(entry.ranking)
@@ -123,15 +133,21 @@ def create_deck(native_dictionaries: list[BasicDictionary], english_dictionaries
                 frequency_num_sources[entry.term] = num_sources
                 frequency[entry.term] = averaged_frequency
 
+            if entry.term == "我": print(f"adding {entry.term} from source {source.name} with ranking {entry.ranking}, current ranking {frequency[entry.term]:.2f}", flush=True)
+
 
     # store the frequency rating inside the cards, if we can find one in the frequency list
     for term in cards.keys():
         if term in frequency:
             cards[term].priority = frequency[term]
 
-    # sort the cards by their frequency rating (stored in .priority), then tiebreak by length, then lexicographically
+
     cards_list: list[VocabularyCard] = list(cards.values())
-    cards_list.sort(key=lambda c: (c.priority, len(c.term), c.term), reverse=False)
+    # sort the cards by number of frequency sources, then frequency rating (stored in .priority), then tiebreak by length, then lexicographically
+    # reverse=False specifies that we sort in _ascending_ order (smallest to largest)
+    # sorting by number of sources first ensures that we don't bias the order by a single dictionary with a bunch of unique entries for conjugations or n-grams or something that the other sources don't have
+    # we multiply the n um_frequency_sources by -1 because our sort direction is ascending, but we want descending for that sort key only (more frequency sources is better)
+    cards_list.sort(key=lambda c: (-1*frequency_num_sources.get(c.term, 0.0), c.priority, len(c.term), c.term), reverse=False)
 
     # replace the priority of the cards with their order in the list
     for i, card in enumerate(cards_list):
@@ -222,7 +238,7 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
 
 # loads the top N cards into Anki (limit = N)
 def create_notes(deck: VocabularyDeck, deck_name: str, limit: int = 40000) -> list[genanki.Note]:
-    print("creating cards into anki", flush=True)
+    print("creating anki cards", flush=True)
 
     # create the model for the notes
     model = create_model(deck, deck_name)

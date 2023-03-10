@@ -2,8 +2,9 @@ from __future__ import annotations
 import core.anki_connect as anki_connect
 from tqdm import tqdm
 from core.utils import pprint_data
+import genanki
 
-def transfer_progress(source_deck: str, source_field: str, destination_deck: str, destination_field: str) -> None:
+def transfer_progress_anki_connect(source_deck: str, source_field: str, destination_deck: str, destination_field: str) -> None:
     print(f"transferring progress from {source_deck} to {destination_deck}", flush=True)
     print(f"fetching source deck {source_deck}", flush=True)
     source_cards = anki_connect.get_cards_info(source_deck)
@@ -17,7 +18,7 @@ def transfer_progress(source_deck: str, source_field: str, destination_deck: str
         key = destination_card["fields"][destination_field]["value"]
         destination_cards_map[key] = destination_card
 
-    progress_fields = ['interval', 'reps', 'lapses', 'left', 'type', 'due', 'factor', 'queue']
+    progress_fields = ['reps', 'lapses', 'left', 'type', 'due', 'factor', 'queue', 'ivl']
 
     print("transferring progress via ankiconnect", flush=True)
     count = 0
@@ -35,7 +36,12 @@ def transfer_progress(source_deck: str, source_field: str, destination_deck: str
             # build a map of updated field values
             updated_fields = {}
             for field in progress_fields:
-                updated_fields[field] = source_card[field]
+                # need to special case ivl because the name differs between AnkiConnect and the underlying Anki Python library
+                if field == 'ivl':
+                    internal_field = 'interval'
+                else:
+                    internal_field = field
+                updated_fields[field] = source_card[internal_field]
 
             # use anki connect to update the progress fields in the destination deck
             anki_connect.set_card_values(card_id, updated_fields)

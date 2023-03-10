@@ -10,14 +10,14 @@ from core.vocab_deck import create_anki_deck, load_deck_from_directory
 from core.utils import print_utf8
 import typing
 import genanki
-from core.transfer_anki_progress import transfer_progress
+from core.transfer_anki_progress import transfer_progress_anki_connect
 
 def main() -> None:
-    create_decks()
+    # create_decks()
+    transfer_japanese_progress()
 
 def transfer_japanese_progress() -> None:
-    transfer_progress("* Japanese Core 10k Recognition", "vocab", "Japanese", "term")
-
+    transfer_progress_anki_connect("* Japanese Vocab", "term", "Japanese", "term")
 
 def create_decks() -> None:
     deck_paths = [
@@ -35,7 +35,6 @@ def create_decks() -> None:
         print(f"saving deck to file {destination_file}", flush=True)
 
         genanki.Package(anki_deck).write_to_file(destination_file)
-
 
 def convert_frequency_dictionaries() -> None:
     # list of tuples of (source name, filename, parsing function, destination filename)
