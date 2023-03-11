@@ -193,8 +193,8 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
         field_names.append(f"english_definition_source_{i}")
         field_names.append(f"english_definition_text_{i}")
 
-    front_html = "<h1 class=\"term\">{{term}}</h1>\n"
-    back_html = "<h1 class=\"term\">{{term}}</h1>\n<p>{{reading}}</p>\n"
+    front_html = "<p class=\"term\">{{term}}</p>\n"
+    back_html = "<p class=\"term\">{{term}}</p>\n<p>{{reading}}</p>\n"
     back_html += "<h1 class=\"section_header\">Native Definitions</h1>\n"
     for i in range(max_native_definitions):
         back_html += "<h2 class=\"source_name\">{{native_definition_source_" + str(i) + "}}</h2>\n"
@@ -211,7 +211,7 @@ def create_model(deck: VocabularyDeck, deck_name: str) -> genanki.Model:
     }
 
     .term {
-        text-size: 45pt;
+        font-size: 45pt;
     }
 
     .section_header {}

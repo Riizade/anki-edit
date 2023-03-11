@@ -27,6 +27,9 @@ def transfer_progress_anki_connect(source_deck: str, source_field: str, destinat
         # skip non-well-formed cards
         if source_field not in source_card['fields']:
             continue
+        # skip 'new' cards
+        if source_card['type'] == 0:
+            continue
         key = source_card["fields"][source_field]["value"]
         # if a card in the source deck matches a card in the destination deck
         if key in destination_cards_map:
