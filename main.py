@@ -13,8 +13,8 @@ import genanki
 from core.transfer_anki_progress import transfer_progress_anki_connect
 
 def main() -> None:
-    # create_decks()
-    transfer_japanese_progress()
+    create_decks()
+    # transfer_japanese_progress()
 
 def transfer_japanese_progress() -> None:
     transfer_progress_anki_connect("* Japanese Vocab", "term", "Japanese", "term")
